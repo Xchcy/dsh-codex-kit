@@ -1,0 +1,3 @@
+- insert:
+    - id: notifications-bell
+      name: '@local/dsh-notifications-bell'

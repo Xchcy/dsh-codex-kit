@@ -1,0 +1,3 @@
+- insert:
+    - id: chat-only
+      name: '@local/dsh-chat-only'

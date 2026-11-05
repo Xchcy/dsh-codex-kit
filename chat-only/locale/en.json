@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Chat-only mode",
+    "description": "Start a session that belongs to no workspace, straight from the sidebar."
+  }
+}

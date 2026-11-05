@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Projects browser",
+    "description": "Replaces the sidebar session browser with collapsible Projects (workspaces and their sessions) plus a Recent list of every session ordered by last activity."
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Notification bell",
+    "description": "A bell in the sidebar header: a yellow dot while conversations wait for approval, a blue dot when conversations finish, and a dropdown that floats those conversations above the recent ones."
+  }
+}

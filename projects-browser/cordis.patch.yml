@@ -1,0 +1,3 @@
+- insert:
+    - id: projects-browser
+      name: '@local/dsh-projects-browser'
