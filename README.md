@@ -20,6 +20,10 @@
 | --- | --- |
 | ![](screenshots/bell-panel.png) | ![](screenshots/running-dots-4frames.png) |
 
+| 意外停止（红点，非主动停止） |
+| --- |
+| ![](screenshots/sidebar-red-mark.png) |
+
 ## 安装
 
 每个插件都是标准的 DSH bundle（`package.json` + `cordis.patch.yml` + `index.js` + `client.js` + `locale/` + `icon.svg`）。任选其一或全部安装：
