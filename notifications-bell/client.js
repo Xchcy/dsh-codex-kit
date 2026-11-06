@@ -1,4 +1,4 @@
-window.__ModuleLoader__.load({
+﻿window.__ModuleLoader__.load({
 	id: '@local/dsh-notifications-bell',
 	factory(require) {
 		const React = require('react');
@@ -21,6 +21,10 @@ window.__ModuleLoader__.load({
 			'panel.recent': '最近',
 			'panel.emptyPriority': '暂无需要处理的会话',
 			'panel.emptyRecent': '暂无最近会话',
+			'panel.details': '查看详情',
+			'board.title': '会话看板',
+			'board.empty': '暂无会话',
+			'board.all': '全部',
 			'status.running': '运行中',
 			'kind.approval': '等待审批',
 			'kind.planReview': '等待确认计划',
@@ -46,6 +50,10 @@ window.__ModuleLoader__.load({
 			'panel.recent': 'Recent',
 			'panel.emptyPriority': 'Nothing needs your attention',
 			'panel.emptyRecent': 'No recent sessions',
+			'panel.details': 'View details',
+			'board.title': 'Session board',
+			'board.empty': 'No sessions',
+			'board.all': 'All',
 			'status.running': 'Running',
 			'kind.approval': 'Awaiting approval',
 			'kind.planReview': 'Plan review',
@@ -89,6 +97,21 @@ window.__ModuleLoader__.load({
 			'.dsh-nb-rowtime{flex:none;font-size:11px;color:var(--dsw-alias-label-quaternary)}',
 			'.dsh-nb-rowsub{font-size:11px;color:var(--dsw-alias-label-tertiary);padding-left:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
 			'.dsh-nb-sep{height:1px;margin:6px 12px;background:var(--dsw-alias-separator-primary)}',
+			'.dsh-nb-summary{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:6px 12px;border:0;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;text-align:left;cursor:pointer}',
+			'.dsh-nb-summary:hover{background:var(--dsw-alias-interactive-bg-hover)}',
+			'.dsh-nb-summary-main{display:flex;align-items:center;gap:8px;min-width:0}',
+			'.dsh-nb-summary-state{width:7px;height:7px;border-radius:50%;flex:none}',
+			'.dsh-nb-summary-state[data-tone="approval"]{background:var(--dsw-alias-state-warn-primary)}',
+			'.dsh-nb-summary-state[data-tone="completed"]{background:var(--dsw-alias-state-business-primary)}',
+			'.dsh-nb-summary-state[data-tone="error"]{background:var(--dsw-alias-state-error-primary)}',
+			'.dsh-nb-summary-count{flex:none;min-width:18px;padding:0 6px;border-radius:999px;background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-secondary);font-size:11px;font-weight:600;text-align:center;line-height:18px}',
+			'.dsh-nb-details{align-self:flex-end;margin:2px 12px 6px;border:1px solid var(--dsw-alias-border-l2);background:transparent;color:var(--dsw-alias-label-secondary);border-radius:6px;padding:4px 10px;font:inherit;font-size:12px;cursor:pointer}',
+			'.dsh-nb-details:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}',
+			'.dsh-nb-all{align-self:center;margin-left:auto;margin-right:6px;border:1px solid var(--dsw-alias-border-l2);background:transparent;color:var(--dsw-alias-label-secondary);border-radius:6px;padding:2px 8px;font:inherit;font-size:12px;cursor:pointer}',
+			'.dsh-nb-all:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}',
+			'.dsh-nb-head .dsh-nb-close{margin-left:0}',
+			'.dsh-nb-board{position:fixed;z-index:902;width:360px;display:flex;flex-direction:column;background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);border:1px solid var(--dsw-alias-border-l2);border-radius:12px;box-shadow:var(--dsw-shadow-lv3);overflow:hidden;font-size:13px}',
+			'.dsh-nb-board-body{overflow:auto;padding:6px 0 8px}',
 		].join('\n');
 
 		function injectCss() {
@@ -365,7 +388,11 @@ window.__ModuleLoader__.load({
 
 			const rect = useSidebarRect();
 			const [open, setOpen] = React.useState(false);
+			const [boardOpen, setBoardOpen] = React.useState(false);
+			const [boardFocus, setBoardFocus] = React.useState(null);
 			const rootRef = React.useRef(null);
+			const bellRef = React.useRef(null);
+			const boardRef = React.useRef(null);
 
 			const list = typeof useSessions === 'function' ? useSessions((snapshot) => snapshot) : undefined;
 			const statuses = typeof useSessionStatus === 'function' ? useSessionStatus((snapshot) => snapshot) : undefined;
@@ -488,11 +515,22 @@ window.__ModuleLoader__.load({
 				}
 			}, [errors]);
 
+			// Clicking the bell toggles the panel; clicking anywhere else (the
+			// close button, Escape, or another part of the app) closes it too.
 			React.useEffect(() => {
-				if (!open) return;
+				if (!open) return undefined;
 				const onDown = (event) => {
+					const target = event.target;
+					if (!(target instanceof Node)) {
+						setOpen(false);
+						return;
+					}
 					const root = rootRef.current;
-					if (root !== null && event.target instanceof Node && root.contains(event.target)) return;
+					if (root !== null && root.contains(target)) return;
+					const bell = bellRef.current;
+					if (bell !== null && bell.contains(target)) return;
+					const boardEl = boardRef.current;
+					if (boardEl !== null && boardEl.contains(target)) return;
 					setOpen(false);
 				};
 				const onKey = (event) => {
@@ -565,52 +603,55 @@ window.__ModuleLoader__.load({
 				return tr('group.earlier', { y: date.getFullYear(), m: date.getMonth() + 1, d: date.getDate() });
 			};
 
+			const priorityRows = [
+				{ key: 'running', label: tr('panel.running'), count: runningSessions.length, tone: 'running' },
+				{ key: 'approvals', label: tr('panel.approvals'), count: approvals.length, tone: 'approval' },
+				{ key: 'errors', label: tr('panel.errors'), count: stoppedSessions.length, tone: 'error' },
+				{ key: 'completions', label: tr('panel.completions'), count: completions.length, tone: 'completed' },
+			];
+			const priorityTotal = priorityRows.reduce((sum, row) => sum + row.count, 0);
+
+			const summaryState = (tone) =>
+				tone === 'running'
+					? h(RunningMark)
+					: h('span', { className: 'dsh-nb-summary-state', 'data-tone': tone });
+
 			const prioritySection = h(
 				'div',
 				null,
 				h('div', { className: 'dsh-nb-section-label' }, tr('panel.priority')),
-				hasRunning ? h('div', { className: 'dsh-nb-section-label' }, tr('panel.running')) : null,
-				hasRunning
-					? runningSessions.map((entry) =>
-							h(SessionRow, {
-								key: 'run:' + entry.session.id,
-								session: entry.session,
-								mark: 'running',
-								meta: '·',
-								subtitle: undefined,
-								onOpen: onOpenSession,
-							}),
-						)
-					: null,
-				hasApprovals ? h('div', { className: 'dsh-nb-section-label' }, tr('panel.approvals')) : null,
-				hasApprovals ? approvals.map(renderPriorityRow) : null,
-				hasStopped ? h('div', { className: 'dsh-nb-section-label' }, tr('panel.errors')) : null,
-				hasStopped
-					? stoppedSessions.map((entry) =>
-							h(SessionRow, {
-								key: 'e:' + entry.session.id,
-								session: entry.session,
-								mark: 'error',
-								subtitle: tr('kind.error'),
-								onOpen: onOpenSession,
-							}),
-						)
-					: null,
-				hasCompletions ? h('div', { className: 'dsh-nb-section-label' }, tr('panel.completions')) : null,
-				hasCompletions
-					? completions.map((entry) =>
-							h(SessionRow, {
-								key: 'c:' + entry.session.id,
-								session: entry.session,
-								mark: 'completed',
-								subtitle: undefined,
-								onOpen: onOpenSession,
-							}),
-						)
-					: null,
-				!hasApprovals && !hasCompletions && !hasStopped && !hasRunning
+				priorityTotal === 0
 					? h('div', { className: 'dsh-nb-empty' }, tr('panel.emptyPriority'))
-					: null,
+					: priorityRows
+							.filter((row) => row.count > 0)
+							.map((row) =>
+								h(
+									'button',
+									{
+										type: 'button',
+										key: 's:' + row.key,
+										className: 'dsh-nb-summary',
+										onClick: () => {
+											setBoardFocus(row.key);
+											setBoardOpen(true);
+										},
+									},
+									h('span', { className: 'dsh-nb-summary-main' }, summaryState(row.tone), h('span', null, row.label)),
+									h('span', { className: 'dsh-nb-summary-count' }, String(row.count)),
+								),
+							),
+				h(
+					'button',
+					{
+						type: 'button',
+						className: 'dsh-nb-details',
+						onClick: () => {
+							setBoardFocus(null);
+							setBoardOpen(true);
+						},
+					},
+					tr('panel.details'),
+				),
 			);
 
 			const recentSection = h(
@@ -630,6 +671,91 @@ window.__ModuleLoader__.load({
 				),
 			);
 
+			const boardTop = rect === null ? 56 : Math.max(56, rect.top + 44);
+			const boardStyle = { top: boardTop, right: 16, maxHeight: Math.max(200, window.innerHeight - boardTop - 16) };
+
+			const boardGroup = (label, rows, mark) =>
+				rows.length === 0
+					? null
+					: h(
+							'div',
+							null,
+							h('div', { className: 'dsh-nb-section-label' }, label),
+							rows.map((entry) =>
+								h(SessionRow, {
+									key: 'b:' + mark + ':' + entry.session.id,
+									session: entry.session,
+									mark,
+									meta: metaLabel(entry.session.updatedAt ?? Date.now()),
+									subtitle: undefined,
+									onOpen: onOpenSession,
+								}),
+							),
+						);
+
+			const boardApprovals =
+				approvals.length === 0
+					? null
+					: h(
+							'div',
+							null,
+							h('div', { className: 'dsh-nb-section-label' }, tr('panel.approvals')),
+							approvals.map((entry) =>
+								h(SessionRow, {
+									key: 'ba:' + entry.session.id,
+									session: entry.session,
+									mark: 'approval',
+									meta: metaLabel(entry.session.updatedAt ?? Date.now()),
+									subtitle:
+										entry.kind === 'plan-review'
+											? tr('kind.planReview')
+											: entry.kind === 'question'
+												? tr('kind.question')
+												: tr('kind.approval'),
+									onOpen: onOpenSession,
+								}),
+							),
+						);
+
+			const boardFocusLabel = (key) =>
+				key === 'running'
+					? tr('panel.running')
+					: key === 'approvals'
+						? tr('panel.approvals')
+						: key === 'errors'
+							? tr('panel.errors')
+							: key === 'completions'
+								? tr('panel.completions')
+								: '';
+			const showBoardGroup = (key) => boardFocus === null || boardFocus === key;
+			const boardTitle =
+				boardFocus === null ? tr('board.title') : tr('board.title') + ' · ' + boardFocusLabel(boardFocus);
+
+			const board = boardOpen
+				? h(
+						'div',
+						{ ref: boardRef, className: 'dsh-nb-board', style: boardStyle, role: 'dialog', 'aria-label': tr('board.title') },
+						h(
+							'div',
+							{ className: 'dsh-nb-head' },
+							h('span', { className: 'dsh-nb-title' }, boardTitle),
+							boardFocus === null
+								? null
+								: h('button', { type: 'button', className: 'dsh-nb-all', onClick: () => setBoardFocus(null) }, tr('board.all')),
+							h('button', { type: 'button', className: 'dsh-nb-close', title: tr('close'), onClick: () => setBoardOpen(false) }, '×'),
+						),
+						h(
+							'div',
+							{ className: 'dsh-nb-board-body' },
+							entries.length === 0 ? h('div', { className: 'dsh-nb-empty' }, tr('board.empty')) : null,
+							showBoardGroup('running') ? boardGroup(tr('panel.running'), runningSessions, 'running') : null,
+							showBoardGroup('approvals') ? boardApprovals : null,
+							showBoardGroup('errors') ? boardGroup(tr('panel.errors'), stoppedSessions, 'error') : null,
+							showBoardGroup('completions') ? boardGroup(tr('panel.completions'), completions, 'completed') : null,
+						),
+					)
+				: null;
+
 			return h(
 				React.Fragment,
 				null,
@@ -640,6 +766,7 @@ window.__ModuleLoader__.load({
 						className: 'dsh-nb-bell',
 						'data-open': open ? 'true' : 'false',
 						style: buttonStyle,
+						ref: bellRef,
 						title: bellLabel,
 						'aria-label': bellLabel,
 						onClick: () => setOpen((value) => !value),
@@ -662,6 +789,7 @@ window.__ModuleLoader__.load({
 							h('div', { className: 'dsh-nb-body' }, prioritySection, h('div', { className: 'dsh-nb-sep' }), recentSection),
 						)
 					: null,
+				board,
 			);
 		}
 
@@ -712,3 +840,5 @@ window.__ModuleLoader__.load({
 		};
 	},
 });
+
+// build 2026-11-06T15:37 board-focus

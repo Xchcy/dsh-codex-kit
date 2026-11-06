@@ -1,4 +1,4 @@
-window.__ModuleLoader__.load({
+﻿window.__ModuleLoader__.load({
   id: '@local/dsh-projects-browser',
   factory(require) {
     const React = require('react');
@@ -26,6 +26,12 @@ window.__ModuleLoader__.load({
       'projects.defaultName': '默认工作区',
       'recent.empty': '暂无会话',
       'archived.empty': '暂无已归档会话',
+      'archived.title': '已归档会话',
+      'archived.description': '归档的会话不在侧边栏显示，恢复后会回到「最近」。',
+      'archived.restore': '恢复',
+      'project.delete': '删除项目',
+      'project.delete.confirm': '从侧边栏删除「{name}」？文件夹和会话记录都会保留。',
+      'error.deleteWorkspace': '删除项目失败',
       'date.today': '今天',
       'date.yesterday': '昨天',
       'date.weekday.0': '星期日',
@@ -50,6 +56,17 @@ window.__ModuleLoader__.load({
       'menu.archive': '归档会话',
       'menu.unarchive': '恢复会话',
       'archive.confirm': '「{title}」正在运行。归档会先停止它，然后移入已归档。继续吗？',
+      'ctx.addWorkspace': '添加工作区',
+      'ctx.rename': '重命名',
+      'ctx.deleteWorkspace': '删除',
+      'ctx.sort.activity': '按最近活跃时间',
+      'ctx.sort.created': '按创建时间',
+      'ctx.sort.name': '按名称',
+      'ctx.collapse': '折叠',
+      'ctx.expand': '展开',
+      'ctx.showPinned': '显示置顶分区',
+      'ctx.hidePinned': '隐藏置顶分区',
+      'error.renameWorkspace': '重命名项目失败',
     };
     const en = {
       'section.projects': 'Projects',
@@ -70,6 +87,12 @@ window.__ModuleLoader__.load({
       'projects.defaultName': 'Default workspace',
       'recent.empty': 'No sessions yet',
       'archived.empty': 'No archived sessions',
+      'archived.title': 'Archived sessions',
+      'archived.description': 'Archived sessions are hidden from the sidebar. Restoring one puts it back into Recent.',
+      'archived.restore': 'Restore',
+      'project.delete': 'Delete project',
+      'project.delete.confirm': 'Remove "{name}" from the sidebar? The folder and its session logs are kept.',
+      'error.deleteWorkspace': 'Could not delete the project',
       'date.today': 'Today',
       'date.yesterday': 'Yesterday',
       'date.weekday.0': 'Sunday',
@@ -94,13 +117,24 @@ window.__ModuleLoader__.load({
       'menu.archive': 'Archive session',
       'menu.unarchive': 'Restore session',
       'archive.confirm': '"{title}" is running. Archiving stops it first and then moves it to Archived. Continue?',
+      'ctx.addWorkspace': 'Add workspace',
+      'ctx.rename': 'Rename',
+      'ctx.deleteWorkspace': 'Delete',
+      'ctx.sort.activity': 'Sort by last active',
+      'ctx.sort.created': 'Sort by created',
+      'ctx.sort.name': 'Sort by name',
+      'ctx.collapse': 'Collapse',
+      'ctx.expand': 'Expand',
+      'ctx.showPinned': 'Show pinned section',
+      'ctx.hidePinned': 'Hide pinned section',
+      'error.renameWorkspace': 'Could not rename the project',
     };
 
     const CSS = [
       '.dsh-pb-root{display:flex;flex-direction:column;gap:10px;min-height:0;overflow-y:auto;padding:2px 0 10px}',
       '.dsh-pb-root::-webkit-scrollbar{width:8px}',
       '.dsh-pb-section{display:flex;flex-direction:column;gap:1px;min-width:0}',
-      '.dsh-pb-head{display:flex;align-items:center;gap:2px;height:28px}',
+      '.dsh-pb-head{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:2px;height:30px;margin:0 -2px;padding:0 2px;background:var(--dsw-specific-sidebar-fill);border-bottom:1px solid var(--dsw-alias-border-l2)}',
       '.dsh-pb-head-main{display:flex;flex:1;align-items:center;gap:6px;min-width:0;height:26px;padding:0 6px;border:none;border-radius:6px;background:transparent;color:var(--dsw-alias-label-tertiary);font:inherit;font-size:12px;font-weight:500;cursor:pointer;user-select:none}',
       '.dsh-pb-head-main:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}',
       '.dsh-pb-head-main:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:-2px}',
@@ -139,6 +173,22 @@ window.__ModuleLoader__.load({
       '.dsh-pb-empty{padding:2px 8px 6px 31px;color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:18px}',
       '.dsh-pb-rail{display:flex;flex-direction:column;align-items:center;gap:2px;padding-top:2px}',
       '.dsh-pb-error{padding:2px 8px;color:var(--dsw-alias-label-error, #d33);font-size:12px;line-height:16px}',
+      '.dsh-pb-archived{display:flex;flex-direction:column;gap:8px;padding:2px 0}',
+      '.dsh-pb-archived-title{margin:0;color:var(--dsw-alias-label-primary);font-size:14px;font-weight:600;line-height:22px}',
+      '.dsh-pb-archived-desc{margin:0 0 4px;color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:18px}',
+      // The shipped sidebar rows (Plugins / Scheduled tasks / Context insights /
+      // More) are noise for this workflow: only Projects and Recent should stay.
+      '[class*="wtg9ga_panelList"]{display:none!important}',
+      '[class*="wtg9ga_moreAnchor"]{display:none!important}',
+      '.dsh-pb-ctx{position:fixed;z-index:60;min-width:176px;padding:4px;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-alias-bg-layer-1);box-shadow:var(--dsw-shadow-lv3)}',
+      '.dsh-pb-ctx-item{display:flex;align-items:center;gap:8px;width:100%;height:28px;padding:0 8px;border:none;border-radius:6px;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;text-align:left;cursor:pointer;white-space:nowrap}',
+      '.dsh-pb-ctx-item:hover{background:var(--dsw-alias-interactive-bg-hover)}',
+      '.dsh-pb-ctx-icon{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;color:var(--dsw-alias-label-tertiary)}',
+      '.dsh-pb-ctx-label{flex:1}',
+      '.dsh-pb-ctx-check{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;color:var(--dsw-alias-state-business-primary)}',
+      '.dsh-pb-ctx-sep{height:1px;margin:4px 6px;background:var(--dsw-alias-border-l2)}',
+      '.dsh-pb-rename{flex:1;min-width:0;height:24px;padding:0 6px;border:1px solid var(--dsw-alias-border-l2);border-radius:6px;background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;outline:none}',
+      '.dsh-pb-rename:focus{border-color:var(--dsw-alias-state-business-primary)}',
     ].join('\n');
 
     const FOLDER_ICON = h(
@@ -211,6 +261,24 @@ window.__ModuleLoader__.load({
         strokeLinecap: 'round',
       }),
       h('path', { d: 'M4 4v5h5', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round', strokeLinejoin: 'round' }),
+    );
+
+    const TRASH_ICON = h(
+      'svg',
+      { width: 13, height: 13, viewBox: '0 0 24 24', fill: 'none', 'aria-hidden': 'true' },
+      h('path', {
+        d: 'M4 7h16M9 7V4.5h6V7m-8 0 1 13h8l1-13',
+        stroke: 'currentColor',
+        strokeWidth: 1.5,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+      }),
+    );
+
+    const CHECK_ICON = h(
+      'svg',
+      { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'none', 'aria-hidden': 'true' },
+      h('path', { d: 'M5 12.5 9.5 17 19 7', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }),
     );
 
     function Chevron({ open }) {
@@ -373,6 +441,19 @@ window.__ModuleLoader__.load({
       return lang.toLowerCase().startsWith('zh');
     }
 
+    /** A compact timestamp for the settings list: today keeps the time, older shows the date. */
+    function formatWhen(ms) {
+      if (typeof ms !== 'number' || ms <= 0) return '';
+      const date = new Date(ms);
+      const now = new Date();
+      const sameDay =
+        date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate();
+      if (sameDay) return pad2(date.getHours()) + ':' + pad2(date.getMinutes());
+      return localeIsZh()
+        ? date.getMonth() + 1 + '月' + date.getDate() + '日'
+        : date.getMonth() + 1 + '/' + date.getDate();
+    }
+
     function readFlag(key, fallback) {
       try {
         const raw = localStorage.getItem(key);
@@ -423,6 +504,95 @@ window.__ModuleLoader__.load({
           document.removeEventListener('keydown', onKey, true);
         };
       }, [ref, open, close]);
+    }
+
+    function readString(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw === null || raw === '' ? fallback : raw;
+      } catch {
+        return fallback;
+      }
+    }
+
+    /** Persisted string preference (sort order, etc.). */
+    function useStoredString(key, fallback) {
+      const [value, setValue] = useState(() => readString(key, fallback));
+      const set = useCallback(
+        (next) => {
+          setValue(next);
+          try {
+            localStorage.setItem(key, next);
+          } catch {
+            /* preference storage is best effort */
+          }
+        },
+        [key],
+      );
+      return [value, set];
+    }
+
+    /**
+     * Right-click menu for section headers and rows. It is anchored to the
+     * pointer and rendered at this slot's root, which itself scrolls, so the
+     * position is fixed rather than absolute.
+     */
+    function useContextMenu() {
+      const [menu, setMenu] = useState(null);
+      const close = useCallback(() => setMenu(null), []);
+      const openAt = useCallback((event, items) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setMenu({ x: event.clientX, y: event.clientY, items });
+      }, []);
+      useEffect(() => {
+        if (menu === null) return undefined;
+        const onDown = (event) => {
+          const target = event.target;
+          if (target instanceof Node && typeof target.closest === 'function' && target.closest('.dsh-pb-ctx') !== null) return;
+          close();
+        };
+        const onKey = (event) => {
+          if (event.key === 'Escape') close();
+        };
+        const onScroll = () => close();
+        document.addEventListener('mousedown', onDown, true);
+        document.addEventListener('keydown', onKey, true);
+        window.addEventListener('scroll', onScroll, true);
+        return () => {
+          document.removeEventListener('mousedown', onDown, true);
+          document.removeEventListener('keydown', onKey, true);
+          window.removeEventListener('scroll', onScroll, true);
+        };
+      }, [menu, close]);
+      const element =
+        menu === null
+          ? null
+          : h(
+              'div',
+              { className: 'dsh-pb-ctx', role: 'menu', style: { left: menu.x + 'px', top: menu.y + 'px' } },
+              menu.items.map((item, index) =>
+                item.separator === true
+                  ? h('div', { key: 'sep-' + String(index), className: 'dsh-pb-ctx-sep' })
+                  : h(
+                      'button',
+                      {
+                        key: String(item.label) + '-' + String(index),
+                        type: 'button',
+                        role: 'menuitem',
+                        className: 'dsh-pb-ctx-item',
+                        onClick: () => {
+                          close();
+                          item.run();
+                        },
+                      },
+                      h('span', { className: 'dsh-pb-ctx-icon' }, item.icon === undefined ? null : item.icon),
+                      h('span', { className: 'dsh-pb-ctx-label' }, item.label),
+                      item.checked === true ? h('span', { className: 'dsh-pb-ctx-check' }, CHECK_ICON) : null,
+                    ),
+              ),
+            );
+      return { openAt, close, element };
     }
 
     /** One session row: its main button, the state mark, and the actions menu. */
@@ -491,6 +661,52 @@ window.__ModuleLoader__.load({
       );
     }
 
+    /** One project row: its actions menu (delete the registration only). */
+    function ProjectMenu(props) {
+      const { t, onDelete } = props;
+      const ref = useRef(null);
+      const [open, setOpen] = useState(false);
+      const close = useCallback(() => setOpen(false), []);
+      useDismiss(ref, open, close);
+      return h(
+        'div',
+        { className: 'dsh-pb-item', style: { flex: 'none' }, ref },
+        h(
+          'button',
+          {
+            type: 'button',
+            className: 'dsh-pb-more',
+            'data-open': open ? 'true' : 'false',
+            title: t('menu.more'),
+            'aria-label': t('menu.more'),
+            'aria-expanded': open ? 'true' : 'false',
+            onClick: () => setOpen((current) => !current),
+          },
+          MORE_ICON,
+        ),
+        open
+          ? h(
+              'div',
+              { className: 'dsh-pb-menu', role: 'menu' },
+              h(
+                'button',
+                {
+                  type: 'button',
+                  role: 'menuitem',
+                  className: 'dsh-pb-menu-item',
+                  onClick: () => {
+                    close();
+                    onDelete();
+                  },
+                },
+                h('span', { className: 'dsh-pb-menu-icon' }, TRASH_ICON),
+                t('project.delete'),
+              ),
+            )
+          : null,
+      );
+    }
+
     function ProjectsBrowser(props) {
       const {
         wide,
@@ -502,6 +718,8 @@ window.__ModuleLoader__.load({
         openSession,
         startSession,
         addWorkspace,
+        deleteWorkspace,
+        renameWorkspace,
         errorStore,
         archiveSession,
         unarchiveSession,
@@ -520,7 +738,9 @@ window.__ModuleLoader__.load({
       const [projectsOpen, toggleProjectsOpen] = useFlag('dsh.projectsBrowser.projects', false);
       const [pinnedOpen, togglePinnedOpen] = useFlag('dsh.projectsBrowser.pinned', true);
       const [recentOpen, toggleRecentOpen] = useFlag('dsh.projectsBrowser.recent', true);
-      const [archivedOpen, toggleArchivedOpen] = useFlag('dsh.projectsBrowser.archived', false);
+      const [pinnedHidden, togglePinnedHidden] = useFlag('dsh.projectsBrowser.pinnedHidden', false);
+      const [sortMode, setSortMode] = useStoredString('dsh.projectsBrowser.sort', 'activity');
+      const ctx = useContextMenu();
       const [expanded, setExpanded] = useState(readExpanded);
       const [addError, setAddError] = useState('');
       const [actionError, setActionError] = useState('');
@@ -594,6 +814,15 @@ window.__ModuleLoader__.load({
         [statuses, t, errorSet, pinnedIds, interruptedIds],
       );
 
+      const orderIndex = useMemo(() => {
+        const map = new Map();
+        const ids = sessions !== undefined && sessions !== null && Array.isArray(sessions.ids) ? sessions.ids : [];
+        ids.forEach((id, position) => {
+          map.set(id, position);
+        });
+        return map;
+      }, [sessions]);
+
       const { pinnedRows, recentRows, activeRows, archivedRows } = useMemo(() => {
         const byId = sessions !== undefined && sessions !== null && sessions.byId !== null && typeof sessions.byId === 'object' ? sessions.byId : {};
         const active = [];
@@ -608,17 +837,26 @@ window.__ModuleLoader__.load({
           if (archivedIds.has(row.id)) retired.push(rowOf(row, true));
           else active.push(rowOf(row, false));
         }
-        const compare = (a, b) => {
-          if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+        const bySort = (a, b) => {
+          if (sortMode === 'name') return a.title.localeCompare(b.title, localeIsZh() ? 'zh-CN' : 'en');
+          if (sortMode === 'created') {
+            const left = orderIndex.has(a.id) ? orderIndex.get(a.id) : 0;
+            const right = orderIndex.has(b.id) ? orderIndex.get(b.id) : 0;
+            return right - left;
+          }
           if (a.rank !== b.rank) return a.rank - b.rank;
           return b.updatedAt - a.updatedAt;
         };
+        const compare = (a, b) => {
+          if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+          return bySort(a, b);
+        };
         active.sort(compare);
-        retired.sort((a, b) => b.updatedAt - a.updatedAt);
-        const pinned = active.filter((row) => row.pinned === true).slice().sort((a, b) => b.updatedAt - a.updatedAt);
+        retired.sort(bySort);
+        const pinned = active.filter((row) => row.pinned === true).slice().sort(bySort);
         const recent = active.filter((row) => row.pinned !== true);
         return { pinnedRows: pinned, recentRows: recent, activeRows: active, archivedRows: retired };
-      }, [sessions, archivedIds, rowOf]);
+      }, [sessions, archivedIds, rowOf, sortMode, orderIndex]);
 
       const sessionsByWorkspace = useMemo(() => {
         const map = new Map();
@@ -722,6 +960,23 @@ window.__ModuleLoader__.load({
           }
         },
         [unarchiveSession, t],
+      );
+
+      const onDeleteWorkspace = useCallback(
+        async (workspace, name) => {
+          if (typeof window !== 'undefined' && typeof window.confirm === 'function') {
+            const proceed = window.confirm(t('project.delete.confirm').replace('{name}', name));
+            if (!proceed) return;
+          }
+          try {
+            setActionError('');
+            await deleteWorkspace(workspace.workspaceId);
+          } catch (reason) {
+            console.warn('[projects-browser] deleting the workspace failed:', reason);
+            setActionError(t('error.deleteWorkspace'));
+          }
+        },
+        [deleteWorkspace, t],
       );
 
       const isRunning = useCallback(
@@ -838,6 +1093,60 @@ window.__ModuleLoader__.load({
         return null;
       };
 
+      const renameWorkspaceWithPrompt = useCallback(
+        async (workspace, name) => {
+          if (typeof window === 'undefined' || typeof window.prompt !== 'function') return;
+          const answer = window.prompt(t('ctx.rename'), name);
+          if (answer === null) return;
+          const next = answer.trim();
+          if (next === '' || next === name) return;
+          try {
+            setActionError('');
+            await renameWorkspace(workspace.workspaceId, next);
+          } catch (reason) {
+            console.warn('[projects-browser] renaming the workspace failed:', reason);
+            setActionError(t('error.renameWorkspace'));
+          }
+        },
+        [renameWorkspace, t],
+      );
+
+      const sortItems = () => [
+        { label: t('ctx.sort.activity'), checked: sortMode === 'activity', run: () => setSortMode('activity') },
+        { label: t('ctx.sort.created'), checked: sortMode === 'created', run: () => setSortMode('created') },
+        { label: t('ctx.sort.name'), checked: sortMode === 'name', run: () => setSortMode('name') },
+      ];
+
+      const openProjectsMenu = (event) =>
+        ctx.openAt(event, [
+          { label: t('ctx.addWorkspace'), icon: PLUS_ICON, run: onAddWorkspace },
+          { separator: true },
+          ...sortItems(),
+          { separator: true },
+          { label: projectsOpen ? t('ctx.collapse') : t('ctx.expand'), run: toggleProjectsOpen },
+        ]);
+
+      const openRecentMenu = (event) => ctx.openAt(event, sortItems());
+
+      const openPinnedMenu = (event) =>
+        ctx.openAt(event, [
+          ...sortItems(),
+          { separator: true },
+          { label: pinnedHidden ? t('ctx.showPinned') : t('ctx.hidePinned'), run: togglePinnedHidden },
+        ]);
+
+      const openProjectMenu = (event, workspace, name) =>
+        ctx.openAt(event, [
+          {
+            label: t('ctx.rename'),
+            icon: FOLDER_ICON,
+            run: () => {
+              void renameWorkspaceWithPrompt(workspace, name);
+            },
+          },
+          { label: t('ctx.deleteWorkspace'), icon: TRASH_ICON, run: () => onDeleteWorkspace(workspace, name) },
+        ]);
+
       const sessionRow = (row) =>
         h(SessionMenu, {
           key: row.id,
@@ -865,27 +1174,10 @@ window.__ModuleLoader__.load({
           t,
         });
 
-      const archivedRow = (row) =>
-        h(SessionMenu, {
-          key: row.id,
-          row,
-          meta: metaOf(row.updatedAt),
-          mark: null,
-          items: [
-            {
-              label: t('menu.unarchive'),
-              icon: RESTORE_ICON,
-              run: () => onUnarchive(row),
-            },
-          ],
-          onOpen: () => {},
-          t,
-        });
-
-      const sectionHeader = (label, open, onToggle, action) =>
+      const sectionHeader = (label, open, onToggle, action, onContext) =>
         h(
           'div',
-          { className: 'dsh-pb-head' },
+          { className: 'dsh-pb-head', onContextMenu: onContext === undefined ? undefined : onContext },
           h(
             'button',
             {
@@ -915,7 +1207,7 @@ window.__ModuleLoader__.load({
           { key: workspace.workspaceId, className: 'dsh-pb-section' },
           h(
             'div',
-            { className: 'dsh-pb-project' },
+            { className: 'dsh-pb-project', onContextMenu: (event) => openProjectMenu(event, workspace, name) },
             h(
               'button',
               {
@@ -941,6 +1233,7 @@ window.__ModuleLoader__.load({
               },
               PLUS_ICON,
             ),
+            h(ProjectMenu, { t, onDelete: () => onDeleteWorkspace(workspace, name) }),
           ),
           open
             ? children.length === 0
@@ -953,12 +1246,12 @@ window.__ModuleLoader__.load({
       return h(
         'div',
         { className: 'dsh-pb-root' },
-        pinnedRows.length === 0
+        pinnedRows.length === 0 || pinnedHidden === true
           ? null
           : h(
               'div',
               { className: 'dsh-pb-section' },
-              sectionHeader('pinned', pinnedOpen, togglePinnedOpen),
+              sectionHeader('pinned', pinnedOpen, togglePinnedOpen, undefined, openPinnedMenu),
               pinnedOpen ? h('div', { className: 'dsh-pb-section' }, pinnedRows.map(sessionRow)) : null,
             ),
         h(
@@ -979,6 +1272,7 @@ window.__ModuleLoader__.load({
               },
               PLUS_ICON,
             ),
+            openProjectsMenu,
           ),
           addError === '' ? null : h('div', { className: 'dsh-pb-error' }, addError),
           projectsOpen
@@ -990,7 +1284,7 @@ window.__ModuleLoader__.load({
         h(
           'div',
           { className: 'dsh-pb-section' },
-          sectionHeader('recent', recentOpen, toggleRecentOpen),
+          sectionHeader('recent', recentOpen, toggleRecentOpen, undefined, openRecentMenu),
           actionError === '' ? null : h('div', { className: 'dsh-pb-error' }, actionError),
           recentOpen
             ? recentRows.length === 0
@@ -998,16 +1292,110 @@ window.__ModuleLoader__.load({
               : h('div', { className: 'dsh-pb-section' }, recentRows.map(sessionRow))
             : null,
         ),
-        h(
-          'div',
-          { className: 'dsh-pb-section' },
-          sectionHeader('archived', archivedOpen, toggleArchivedOpen),
-          archivedOpen
-            ? archivedRows.length === 0
-              ? h('div', { className: 'dsh-pb-empty' }, t('archived.empty'))
-              : h('div', { className: 'dsh-pb-section' }, archivedRows.map(archivedRow))
-            : null,
-        ),
+        ctx.element,
+      );
+    }
+
+    /** Re-renders on a client store change; the store keeps its own snapshot. */
+    function useStoreSnapshot(store) {
+      const subscribe = useCallback((onChange) => store.subscribe(onChange), [store]);
+      const getSnapshot = useCallback(() => store.getSnapshot(), [store]);
+      return React.useSyncExternalStore(subscribe, getSnapshot);
+    }
+
+    /** Settings panel: every archived session, with a one-click restore. */
+    function ArchivedSessionsSection(props) {
+      const { t, unarchiveSession, openSession, close, sessionList, workspaceList } = props;
+      const sessions = useStoreSnapshot(sessionList);
+      const workspaces = useStoreSnapshot(workspaceList);
+      const [error, setError] = useState('');
+      const rows = useMemo(() => {
+        const byId = sessions !== undefined && sessions !== null && sessions.byId !== null && typeof sessions.byId === 'object' ? sessions.byId : {};
+        const ids = workspaces !== undefined && workspaces !== null && Array.isArray(workspaces.archivedSessionIds) ? workspaces.archivedSessionIds : [];
+        const items = workspaces !== undefined && workspaces !== null && Array.isArray(workspaces.items) ? workspaces.items : [];
+        const list = [];
+        for (const id of ids) {
+          const row = byId[id];
+          if (row === undefined || row === null || typeof row !== 'object') continue;
+          if (row.blank === true) continue;
+          const owner = items.find(
+            (item) => item !== null && typeof item === 'object' && Array.isArray(item.sessionIds) && item.sessionIds.includes(id),
+          );
+          const title =
+            typeof row.displayTitle === 'string' && row.displayTitle !== ''
+              ? row.displayTitle
+              : typeof row.title === 'string' && row.title !== ''
+                ? row.title
+                : t('session.untitled');
+          const workspace =
+            owner === undefined
+              ? ''
+              : typeof owner.title === 'string' && owner.title !== ''
+                ? owner.title
+                : basenameOf(owner.path);
+          list.push({ id, title, workspace, updatedAt: typeof row.updatedAt === 'number' ? row.updatedAt : 0 });
+        }
+        return list.sort((a, b) => b.updatedAt - a.updatedAt);
+      }, [sessions, workspaces, t]);
+
+      const restore = useCallback(
+        async (sessionId) => {
+          try {
+            setError('');
+            await unarchiveSession(sessionId);
+          } catch (reason) {
+            console.warn('[projects-browser] restoring the archived session failed:', reason);
+            setError(t('error.archive'));
+          }
+        },
+        [unarchiveSession, t],
+      );
+
+      return h(
+        'div',
+        { className: 'dsh-pb-archived' },
+        h('h3', { className: 'dsh-pb-archived-title' }, t('archived.title')),
+        h('p', { className: 'dsh-pb-archived-desc' }, t('archived.description')),
+        error === '' ? null : h('div', { className: 'dsh-pb-error' }, error),
+        rows.length === 0
+          ? h('div', { className: 'dsh-pb-empty' }, t('archived.empty'))
+          : h(
+              'div',
+              { className: 'dsh-pb-section' },
+              rows.map((row) =>
+                h(
+                  'div',
+                  { key: row.id, className: 'dsh-pb-item' },
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'dsh-pb-row',
+                      title: row.title,
+                      onClick: () => {
+                        openSession(row.id);
+                        if (typeof close === 'function') close();
+                      },
+                    },
+                    h('span', { className: 'dsh-pb-icon' }, CHAT_ICON),
+                    h('span', { className: 'dsh-pb-title' }, row.title),
+                    row.workspace === '' ? null : h('span', { className: 'dsh-pb-meta' }, row.workspace),
+                    h('span', { className: 'dsh-pb-meta' }, formatWhen(row.updatedAt)),
+                  ),
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'dsh-pb-action',
+                      title: t('archived.restore'),
+                      'aria-label': t('archived.restore'),
+                      onClick: () => restore(row.id),
+                    },
+                    RESTORE_ICON,
+                  ),
+                ),
+              ),
+            ),
       );
     }
 
@@ -1016,7 +1404,9 @@ window.__ModuleLoader__.load({
       apply(ctx) {
         const uiWorkspace = ctx.get('uiWorkspace');
         const workspaces = ctx.get('workspaces');
+        const sessionsService = ctx.get('sessions');
         const errorStore = createErrorStore();
+        const t = ctx.locale.bind(NS);
         ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'projects-browser: dictionaries');
         ctx.effect(() => {
           const tag = document.createElement('style');
@@ -1057,6 +1447,8 @@ window.__ModuleLoader__.load({
                 pinSession: (sessionId) => uiWorkspace.pinSession(sessionId),
                 unpinSession: (sessionId) => uiWorkspace.unpinSession(sessionId),
                 errorStore,
+                deleteWorkspace: (workspaceId) => workspaces.delete(workspaceId),
+                renameWorkspace: (workspaceId, title) => workspaces.rename(workspaceId, title),
                 addWorkspace: async () => {
                   const path = await uiWorkspace.pickDirectory();
                   if (path === undefined || path === null || path === '') return;
@@ -1071,3 +1463,5 @@ window.__ModuleLoader__.load({
     };
   },
 });
+
+// build 2026-11-06T15:37 prompt-rename
