@@ -26,29 +26,54 @@
 
 ## 安装
 
-每个插件都是标准的 DSH bundle（`package.json` + `cordis.patch.yml` + `index.js` + `client.js` + `locale/` + `icon.svg`）。任选其一或全部安装：
+每个插件都是标准的 DSH bundle（`package.json` + `cordis.patch.yml` + `index.js` + `client.js` + `locale/` + `icon.svg`），可以只装一个，也可以三个都装。下面三种方式任选一种。
 
-在 DSH 会话里执行（把路径换成你本地的仓库目录）：
+### 方式一（推荐）：让 DSH 里的 AI 帮你装
+
+不需要记任何命令。打开 DSH，新建一个会话，把下面整段话复制发给它：
+
+```text
+帮我安装 DeepSeek Harness 插件，仓库地址：https://github.com/Xchcy/dsh-codex-kit
+
+请按顺序完成：
+1. 检查本机有没有 git；没有就告诉我，不要擅自安装系统软件。
+2. 把仓库克隆到固定目录（例如 ~/Documents/dsh-plugins/dsh-codex-kit）；目录已存在就先 git pull 更新。
+3. 用 plugin_manager 工具安装插件，每个目录一次，target 用克隆后的绝对路径：
+   - <克隆目录>/projects-browser
+   - <克隆目录>/notifications-bell
+   - <克隆目录>/chat-only
+   如果我说了只要其中某几个，就只装那几个。
+4. 装完告诉我：装了哪几个、是否已启用、需不需要刷新页面或重启 DSH。
+   如果需要重启，先征求我同意，不要直接结束 DSH 进程。
+```
+
+几个小提示：
+
+- 提示词里特意写了「不要直接结束 DSH 进程」：DSH 被强行结束时，正在进行的对话会被标记为「任务已停止 / 意外停止」，红点就是这么来的。
+- 如果你的 DSH 开着「需要审批」，AI 执行命令和安装前会弹确认，点允许即可。
+- DSH 版本建议 0.2.1-rc.5 及以上（本插件在该版本实测）。
+
+**装完怎么确认**：刷新一次页面（`Ctrl+Shift+R`）后，侧边栏底部出现「✏️ 仅聊天」、右上角出现铃铛、侧边栏只剩「项目」「最近」（有置顶会话时多一个「置顶」），就说明装好了。若没有，让 AI 执行 `plugin_manager action=list_plugins`，确认列表里出现 `include:@local/dsh-...` 三个条目。
+
+### 方式二：手动安装
+
+先克隆仓库：
+
+```bash
+git clone https://github.com/Xchcy/dsh-codex-kit.git
+```
+
+然后在 DSH 会话里让 AI 执行（把 `<repo>` 换成克隆后的绝对路径）：
 
 ```
-plugin_manager action=install_bundle target="<repo>/chat-only"
 plugin_manager action=install_bundle target="<repo>/projects-browser"
 plugin_manager action=install_bundle target="<repo>/notifications-bell"
+plugin_manager action=install_bundle target="<repo>/chat-only"
 ```
 
-插件会以 `link:` 方式登记到当前 profile（`~/.dsh/profiles/<profile>`），之后**修改插件文件并刷新页面**（DevTools 打开后 `Ctrl+Shift+R`）即可重新加载。新装插件会立即生效，但已经注册过的插槽代码需要刷新页面才会换成新版本。
+插件会以 `link:` 方式登记到当前 profile（`~/.dsh/profiles/<profile>`）。新装插件立即生效；**更新**已注册插件的代码后需要刷新页面（DevTools 打开后 `Ctrl+Shift+R`）才会换成新版本。
 
-### 从 GitHub 安装（不克隆仓库）
-
-也可以让 DSH 直接按 Git 提交安装某个子包（`<commit>` 换成任意一次已推送的提交）：
-
-```
-plugin_manager action=install_bundle target="git+https://github.com/Xchcy/dsh-codex-kit.git#<commit>&path:/chat-only"
-plugin_manager action=install_bundle target="git+https://github.com/Xchcy/dsh-codex-kit.git#<commit>&path:/projects-browser"
-plugin_manager action=install_bundle target="git+https://github.com/Xchcy/dsh-codex-kit.git#<commit>&path:/notifications-bell"
-```
-
-### 从插件市场安装
+### 方式三：从插件市场安装
 
 本仓库已按 [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 的收录格式提交条目（`data/plugins/Xchcy__dsh-codex-kit--*.yml`）。收录合并后，可在 DSH 的 **插件 → Discover** 里搜索 `dsh-codex-kit` 安装；也可以把该市场的 index 地址加到 Discover 的「索引源」：
 
@@ -57,13 +82,24 @@ https://awesome-dsh-plugin.com/index.json
 ```
 
 
-禁用 / 卸载：
+### 更新与卸载
+
+- 更新：进入克隆目录执行 `git pull`，再刷新页面；或者让 AI 对同一路径再执行一次 `install_bundle`。
+- 禁用 / 卸载：
 
 ```
 plugin_manager action=list_plugins                       # 找到 include:@local/dsh-xxx
 plugin_manager action=set_plugin target=include:@local/dsh-xxx enabled=false
 plugin_manager action=remove_bundle target="@local/dsh-xxx"
 ```
+
+### 常见问题
+
+- **刷新页面后提示「DeepSeek Harness 无法使用」**：这是开发态 bundle 版本对不上导致的启动失败，点弹窗里的「重启」即可恢复；不要手动结束进程。
+- **侧边栏的「插件 / 自动化任务 / 上下文洞察 / 更多」不见了**：这是 projects-browser 的预期行为——它把侧边栏精简成「项目 + 最近（+ 置顶）」。
+- **「仅聊天」按钮点了没反应**：确认 `~/.dsh/chats` 目录存在（插件会在 DSH 启动时自动创建）；仍不行就看 AI 会话里 `plugin_manager` 的报错。
+- **铃铛不见了**：侧边栏被折叠成窄条（rail）时铃铛会隐藏，展开侧边栏即可。
+- **想要「已归档」**：右键「最近」标题 →「显示已归档会话」，列表底部会出现已归档分区，行末可恢复。
 
 ## 功能细节
 
@@ -118,8 +154,8 @@ plugin_manager action=remove_bundle target="@local/dsh-xxx"
 ### notifications-bell
 
 - 铃铛固定在侧边栏右上角（`shell.overlay` 插槽，不依赖原生侧边栏内部结构）。颜色点表示当前最高优先级：黄（有等待审批）> 红（有意外停止）> 蓝（有已完成）。
-- 点开后是通知面板：「优先」区只显示状态摘要（`正在工作 N` / `等待审批 N` / `意外停止 N` / `已完成 N`），点击任一状态行会打开右侧「会话看板」并只显示该状态的会话；「查看详情」打开完整看板。
-- 「会话看板」是右侧浮层，按状态分组列出会话，可点 `全部` 查看所有状态，点 `×` 关闭。
+- 点开后是通知面板：「优先」区只显示状态摘要（`正在工作 N` / `等待审批 N` / `意外停止 N` / `已完成 N`）。某个状态**只有一条会话**时，点状态行直接打开那条会话；有多条时打开右侧「会话看板」并只显示该状态。「查看详情」打开完整看板，看板里的每一行都能点开对应会话。
+- 「会话看板」是右侧浮层，按状态分组列出会话，可点 `全部` 查看所有状态，点 `×` 关闭；打开会话时看板会自动收起。
 - 「最近」区为按优先级排序的会话，右侧显示「今天 HH:MM / 昨天 / 星期几 / 年月日」。
 - 点击任一会话直接打开；点击面板/看板以外的位置或按 `Esc` 关闭。
 - 与 projects-browser 使用同一套状态判定规则；两者可以同时安装，也可以只装一个。
