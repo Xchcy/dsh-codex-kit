@@ -1,7 +1,21 @@
 {
   "name": "@local/dsh-chat-only",
   "version": "1.0.0",
-  "private": true,
+  "description": "Adds a chat-only action to the DeepSeek Harness sidebar footer that opens a blank session in a dedicated ~/.dsh/chats workspace, so you can chat without picking a project.",
+  "license": "MIT",
+  "homepage": "https://github.com/Xchcy/dsh-codex-kit",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Xchcy/dsh-codex-kit.git",
+    "directory": "chat-only"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "dsh",
+    "deepseek-harness",
+    "codex",
+    "sidebar"
+  ],
   "type": "module",
   "exports": {
     ".": "./index.js",
@@ -14,14 +28,20 @@
     "client.js",
     "cordis.patch.yml",
     "locale/*.json",
-    "icon.svg"
+    "icon.svg",
+    "screenshots.json",
+    "screenshots"
   ],
   "dsh": {
-    "bundle": { "patch": "./cordis.patch.yml" },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
     "client": {
       "platform": "web",
       "immediately": true,
-      "inject": ["@deepseek-ai/dsh-client-ui-sidebar"]
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-sidebar"
+      ]
     }
   }
 }

@@ -1,4 +1,4 @@
-﻿window.__ModuleLoader__.load({
+window.__ModuleLoader__.load({
   id: '@local/dsh-projects-browser',
   factory(require) {
     const React = require('react');
@@ -66,6 +66,8 @@
       'ctx.expand': '展开',
       'ctx.showPinned': '显示置顶分区',
       'ctx.hidePinned': '隐藏置顶分区',
+      'ctx.showArchived': '显示已归档会话',
+      'ctx.hideArchived': '隐藏已归档会话',
       'error.renameWorkspace': '重命名项目失败',
     };
     const en = {
@@ -127,6 +129,8 @@
       'ctx.expand': 'Expand',
       'ctx.showPinned': 'Show pinned section',
       'ctx.hidePinned': 'Hide pinned section',
+      'ctx.showArchived': 'Show archived sessions',
+      'ctx.hideArchived': 'Hide archived sessions',
       'error.renameWorkspace': 'Could not rename the project',
     };
 
@@ -739,6 +743,7 @@
       const [pinnedOpen, togglePinnedOpen] = useFlag('dsh.projectsBrowser.pinned', true);
       const [recentOpen, toggleRecentOpen] = useFlag('dsh.projectsBrowser.recent', true);
       const [pinnedHidden, togglePinnedHidden] = useFlag('dsh.projectsBrowser.pinnedHidden', false);
+      const [showArchived, toggleShowArchived] = useFlag('dsh.projectsBrowser.archivedView', false);
       const [sortMode, setSortMode] = useStoredString('dsh.projectsBrowser.sort', 'activity');
       const ctx = useContextMenu();
       const [expanded, setExpanded] = useState(readExpanded);
@@ -1126,7 +1131,12 @@
           { label: projectsOpen ? t('ctx.collapse') : t('ctx.expand'), run: toggleProjectsOpen },
         ]);
 
-      const openRecentMenu = (event) => ctx.openAt(event, sortItems());
+      const openRecentMenu = (event) =>
+        ctx.openAt(event, [
+          ...sortItems(),
+          { separator: true },
+          { label: showArchived ? t('ctx.hideArchived') : t('ctx.showArchived'), run: toggleShowArchived },
+        ]);
 
       const openPinnedMenu = (event) =>
         ctx.openAt(event, [
@@ -1243,6 +1253,36 @@
         );
       };
 
+      const archivedSessionRow = (row) =>
+        h(
+          'div',
+          { key: row.id, className: 'dsh-pb-item' },
+          h(
+            'button',
+            {
+              type: 'button',
+              className: 'dsh-pb-row',
+              'data-session-id': row.id,
+              title: row.title,
+              onClick: () => openSession(row.id),
+            },
+            h('span', { className: 'dsh-pb-icon' }, CHAT_ICON),
+            h('span', { className: 'dsh-pb-title' }, row.title),
+            h('span', { className: 'dsh-pb-meta' }, metaOf(row.updatedAt)),
+          ),
+          h(
+            'button',
+            {
+              type: 'button',
+              className: 'dsh-pb-action',
+              title: t('archived.restore'),
+              'aria-label': t('archived.restore'),
+              onClick: () => onUnarchive(row),
+            },
+            RESTORE_ICON,
+          ),
+        );
+
       return h(
         'div',
         { className: 'dsh-pb-root' },
@@ -1292,6 +1332,16 @@
               : h('div', { className: 'dsh-pb-section' }, recentRows.map(sessionRow))
             : null,
         ),
+        showArchived === true
+          ? h(
+              'div',
+              { className: 'dsh-pb-section' },
+              sectionHeader('archived', showArchived, toggleShowArchived),
+              archivedRows.length === 0
+                ? h('div', { className: 'dsh-pb-empty' }, t('archived.empty'))
+                : h('div', { className: 'dsh-pb-section' }, archivedRows.map(archivedSessionRow)),
+            )
+          : null,
         ctx.element,
       );
     }

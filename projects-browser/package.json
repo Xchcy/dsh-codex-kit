@@ -1,9 +1,22 @@
 {
   "name": "@local/dsh-projects-browser",
   "version": "0.1.0",
-  "private": true,
+  "description": "Codex-style sidebar browser for DeepSeek Harness: collapsible pinned/projects/recent sections, status marks (working, approval, interrupted, completed), right-click sort and workspace rename/delete, and per-session pin/archive menus.",
+  "license": "MIT",
+  "homepage": "https://github.com/Xchcy/dsh-codex-kit",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Xchcy/dsh-codex-kit.git",
+    "directory": "projects-browser"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "dsh",
+    "deepseek-harness",
+    "codex",
+    "sidebar"
+  ],
   "type": "module",
-  "description": "Codex-style sidebar browser: a collapsible Projects category (workspaces with their sessions) and a Recent category listing every session by last activity.",
   "exports": {
     ".": "./index.js",
     "./client": "./client.js",
@@ -15,7 +28,9 @@
     "client.js",
     "cordis.patch.yml",
     "locale/*.json",
-    "icon.svg"
+    "icon.svg",
+    "screenshots.json",
+    "screenshots"
   ],
   "dsh": {
     "bundle": {

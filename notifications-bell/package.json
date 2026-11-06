@@ -1,9 +1,22 @@
 {
   "name": "@local/dsh-notifications-bell",
   "version": "0.1.0",
-  "private": true,
+  "description": "Sidebar notification bell for DeepSeek Harness: a yellow dot for a conversation waiting for approval, red for an interrupted turn, blue for a completed one, with a status summary panel and a session board.",
+  "license": "MIT",
+  "homepage": "https://github.com/Xchcy/dsh-codex-kit",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Xchcy/dsh-codex-kit.git",
+    "directory": "notifications-bell"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "dsh",
+    "deepseek-harness",
+    "codex",
+    "sidebar"
+  ],
   "type": "module",
-  "description": "Notification bell in the sidebar header: a yellow dot when a conversation waits for approval, a blue dot when a conversation finished, and a dropdown that floats those conversations above the recent ones.",
   "exports": {
     ".": "./index.js",
     "./client": "./client.js",
@@ -15,7 +28,9 @@
     "client.js",
     "cordis.patch.yml",
     "locale/*.json",
-    "icon.svg"
+    "icon.svg",
+    "screenshots.json",
+    "screenshots"
   ],
   "dsh": {
     "bundle": {

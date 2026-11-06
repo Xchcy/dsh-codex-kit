@@ -38,6 +38,25 @@ plugin_manager action=install_bundle target="<repo>/notifications-bell"
 
 插件会以 `link:` 方式登记到当前 profile（`~/.dsh/profiles/<profile>`），之后**修改插件文件并刷新页面**（DevTools 打开后 `Ctrl+Shift+R`）即可重新加载。新装插件会立即生效，但已经注册过的插槽代码需要刷新页面才会换成新版本。
 
+### 从 GitHub 安装（不克隆仓库）
+
+也可以让 DSH 直接按 Git 提交安装某个子包（`<commit>` 换成任意一次已推送的提交）：
+
+```
+plugin_manager action=install_bundle target="git+https://github.com/Xchcy/dsh-codex-kit.git#<commit>&path:/chat-only"
+plugin_manager action=install_bundle target="git+https://github.com/Xchcy/dsh-codex-kit.git#<commit>&path:/projects-browser"
+plugin_manager action=install_bundle target="git+https://github.com/Xchcy/dsh-codex-kit.git#<commit>&path:/notifications-bell"
+```
+
+### 从插件市场安装
+
+本仓库已按 [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 的收录格式提交条目（`data/plugins/Xchcy__dsh-codex-kit--*.yml`）。收录合并后，可在 DSH 的 **插件 → Discover** 里搜索 `dsh-codex-kit` 安装；也可以把该市场的 index 地址加到 Discover 的「索引源」：
+
+```
+https://awesome-dsh-plugin.com/index.json
+```
+
+
 禁用 / 卸载：
 
 ```
@@ -62,7 +81,7 @@ plugin_manager action=remove_bundle target="@local/dsh-xxx"
 2. **项目**：按工作区列出，可展开显示工作区内会话；标题右侧 `+` 可添加工作区。折叠状态记在 `localStorage["dsh.projectsBrowser.projects"]`。
 3. **最近**：聊天会话 + 各工作区会话合并成的扁平列表，按优先级排序（见下表）。新建但从未发过消息的空会话不会出现在任何列表里。
 
-侧边栏里的「插件 / 自动化任务 / 上下文洞察 / 更多」等原生入口会被隐藏，只保留「项目」「最近」（以及有内容时的「置顶」）。「已归档」不再出现在侧边栏，归档的会话只能从会话行的 `⋯` 菜单里恢复。
+侧边栏里的「插件 / 自动化任务 / 上下文洞察 / 更多」等原生入口会被隐藏，只保留「项目」「最近」（以及有内容时的「置顶」）。「已归档」默认不在侧边栏显示：在「最近」标题上右键 →「显示已归档会话」，列表底部会出现「已归档」分区，点行末的恢复按钮即可把会话放回「最近」；再右键可以隐藏该分区。
 
 **固定在顶部**
 
@@ -71,7 +90,7 @@ plugin_manager action=remove_bundle target="@local/dsh-xxx"
 **右键菜单**
 
 - 「项目」分区标题右键：`添加工作区` / 排序方式 / `折叠`–`展开`。
-- 「最近」分区标题右键：排序方式（按最近活跃时间 / 按创建时间 / 按名称）。
+- 「最近」分区标题右键：排序方式（按最近活跃时间 / 按创建时间 / 按名称） / `显示已归档会话` – `隐藏已归档会话`。
 - 「置顶」分区标题右键：排序方式 / `显示置顶分区`–`隐藏置顶分区`。
 - 工作区行右键：`重命名`（弹出输入框，确认后改名）/ `删除`（二次确认；只从侧边栏移除登记，文件夹与会话记录都会保留）。
 
