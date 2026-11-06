@@ -100,6 +100,9 @@
 			'.dsh-nb-summary{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:6px 12px;border:0;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;text-align:left;cursor:pointer}',
 			'.dsh-nb-summary:hover{background:var(--dsw-alias-interactive-bg-hover)}',
 			'.dsh-nb-summary-main{display:flex;align-items:center;gap:8px;min-width:0}',
+			'.dsh-nb-summary-text{display:flex;flex-direction:column;min-width:0}',
+			'.dsh-nb-summary-label{line-height:18px}',
+			'.dsh-nb-summary-sub{font-size:11px;line-height:15px;color:var(--dsw-alias-label-tertiary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
 			'.dsh-nb-summary-state{width:7px;height:7px;border-radius:50%;flex:none}',
 			'.dsh-nb-summary-state[data-tone="approval"]{background:var(--dsw-alias-state-warn-primary)}',
 			'.dsh-nb-summary-state[data-tone="completed"]{background:var(--dsw-alias-state-business-primary)}',
@@ -571,9 +574,29 @@
 
 			const onOpenSession = (id) => {
 				setOpen(false);
+				setBoardOpen(false);
 				if (errorStore !== undefined && errorStore !== null) errorStore.clear(id);
 				clearInterrupted(id);
 				if (typeof openSession === 'function') openSession(id);
+			};
+
+			const statusEntries = {
+				running: runningSessions,
+				approvals,
+				errors: stoppedSessions,
+				completions,
+			};
+			// A status with a single session is an actionable notification: jump
+			// straight to that conversation. Several sessions of the same status
+			// cannot be represented by one click, so open the board focused there.
+			const openStatus = (key) => {
+				const rows = statusEntries[key] === undefined ? [] : statusEntries[key];
+				if (rows.length === 1) {
+					onOpenSession(rows[0].session.id);
+					return;
+				}
+				setBoardFocus(key);
+				setBoardOpen(true);
 			};
 
 			const renderPriorityRow = (entry) => {
@@ -603,11 +626,19 @@
 				return tr('group.earlier', { y: date.getFullYear(), m: date.getMonth() + 1, d: date.getDate() });
 			};
 
+			const singleTitle = (rows) =>
+				rows.length === 1
+					? typeof rows[0].session.displayTitle === 'string' && rows[0].session.displayTitle !== ''
+						? rows[0].session.displayTitle
+						: typeof rows[0].session.title === 'string'
+							? rows[0].session.title
+							: ''
+					: '';
 			const priorityRows = [
-				{ key: 'running', label: tr('panel.running'), count: runningSessions.length, tone: 'running' },
-				{ key: 'approvals', label: tr('panel.approvals'), count: approvals.length, tone: 'approval' },
-				{ key: 'errors', label: tr('panel.errors'), count: stoppedSessions.length, tone: 'error' },
-				{ key: 'completions', label: tr('panel.completions'), count: completions.length, tone: 'completed' },
+				{ key: 'running', label: tr('panel.running'), count: runningSessions.length, tone: 'running', single: singleTitle(runningSessions) },
+				{ key: 'approvals', label: tr('panel.approvals'), count: approvals.length, tone: 'approval', single: singleTitle(approvals) },
+				{ key: 'errors', label: tr('panel.errors'), count: stoppedSessions.length, tone: 'error', single: singleTitle(stoppedSessions) },
+				{ key: 'completions', label: tr('panel.completions'), count: completions.length, tone: 'completed', single: singleTitle(completions) },
 			];
 			const priorityTotal = priorityRows.reduce((sum, row) => sum + row.count, 0);
 
@@ -632,11 +663,22 @@
 										key: 's:' + row.key,
 										className: 'dsh-nb-summary',
 										onClick: () => {
-											setBoardFocus(row.key);
-											setBoardOpen(true);
+											openStatus(row.key);
 										},
 									},
-									h('span', { className: 'dsh-nb-summary-main' }, summaryState(row.tone), h('span', null, row.label)),
+									h(
+										'span',
+										{ className: 'dsh-nb-summary-main' },
+										summaryState(row.tone),
+										h(
+											'span',
+											{ className: 'dsh-nb-summary-text' },
+											h('span', { className: 'dsh-nb-summary-label' }, row.label),
+											row.single === ''
+												? null
+												: h('span', { className: 'dsh-nb-summary-sub' }, row.single),
+										),
+									),
 									h('span', { className: 'dsh-nb-summary-count' }, String(row.count)),
 								),
 							),
@@ -841,4 +883,4 @@
 	},
 });
 
-// build 2026-11-06T15:37 board-focus
+// build 2026-11-06T17:05 jump-single-status
