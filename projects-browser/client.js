@@ -68,6 +68,8 @@ window.__ModuleLoader__.load({
       'ctx.hidePinned': '隐藏置顶分区',
       'ctx.showArchived': '显示已归档会话',
       'ctx.hideArchived': '隐藏已归档会话',
+      'ctx.showNative': '显示原生侧栏项（插件/定时任务等）',
+      'ctx.hideNative': '隐藏原生侧栏项（插件/定时任务等）',
       'error.renameWorkspace': '重命名项目失败',
     };
     const en = {
@@ -131,6 +133,8 @@ window.__ModuleLoader__.load({
       'ctx.hidePinned': 'Hide pinned section',
       'ctx.showArchived': 'Show archived sessions',
       'ctx.hideArchived': 'Hide archived sessions',
+      'ctx.showNative': 'Show native sidebar entries (plugins, scheduled tasks, ...)',
+      'ctx.hideNative': 'Hide native sidebar entries (plugins, scheduled tasks, ...)',
       'error.renameWorkspace': 'Could not rename the project',
     };
 
@@ -182,8 +186,8 @@ window.__ModuleLoader__.load({
       '.dsh-pb-archived-desc{margin:0 0 4px;color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:18px}',
       // The shipped sidebar rows (Plugins / Scheduled tasks / Context insights /
       // More) are noise for this workflow: only Projects and Recent should stay.
-      '[class*="wtg9ga_panelList"]{display:none!important}',
-      '[class*="wtg9ga_moreAnchor"]{display:none!important}',
+      '.dsh-pb-hide-native [class*="wtg9ga_panelList"]{display:none!important}',
+      '.dsh-pb-hide-native [class*="wtg9ga_moreAnchor"]{display:none!important}',
       '.dsh-pb-ctx{position:fixed;z-index:60;min-width:176px;padding:4px;border:1px solid var(--dsw-alias-border-l2);border-radius:8px;background:var(--dsw-alias-bg-layer-1);box-shadow:var(--dsw-shadow-lv3)}',
       '.dsh-pb-ctx-item{display:flex;align-items:center;gap:8px;width:100%;height:28px;padding:0 8px;border:none;border-radius:6px;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;text-align:left;cursor:pointer;white-space:nowrap}',
       '.dsh-pb-ctx-item:hover{background:var(--dsw-alias-interactive-bg-hover)}',
@@ -744,6 +748,7 @@ window.__ModuleLoader__.load({
       const [recentOpen, toggleRecentOpen] = useFlag('dsh.projectsBrowser.recent', true);
       const [pinnedHidden, togglePinnedHidden] = useFlag('dsh.projectsBrowser.pinnedHidden', false);
       const [showArchived, toggleShowArchived] = useFlag('dsh.projectsBrowser.archivedView', false);
+      const [nativeHidden, toggleNativeHidden] = useFlag('dsh.projectsBrowser.nativeHidden', false);
       const [sortMode, setSortMode] = useStoredString('dsh.projectsBrowser.sort', 'activity');
       const ctx = useContextMenu();
       const [expanded, setExpanded] = useState(readExpanded);
@@ -993,6 +998,15 @@ window.__ModuleLoader__.load({
         [statuses],
       );
 
+      // The native sidebar entries (Plugins / Scheduled tasks / Context insight /
+      // More) are hidden only while the user asks for it from the Projects menu.
+      useEffect(() => {
+        const root = document.documentElement;
+        if (nativeHidden === true) root.classList.add('dsh-pb-hide-native');
+        else root.classList.remove('dsh-pb-hide-native');
+        return () => root.classList.remove('dsh-pb-hide-native');
+      }, [nativeHidden]);
+
       // A session that runs again is no longer an unexpected stop.
       useEffect(() => {
         if (errorStore === undefined || errorStore === null || errorSet.size === 0) return;
@@ -1129,6 +1143,8 @@ window.__ModuleLoader__.load({
           ...sortItems(),
           { separator: true },
           { label: projectsOpen ? t('ctx.collapse') : t('ctx.expand'), run: toggleProjectsOpen },
+          { separator: true },
+          { label: nativeHidden ? t('ctx.showNative') : t('ctx.hideNative'), run: toggleNativeHidden },
         ]);
 
       const openRecentMenu = (event) =>
@@ -1514,4 +1530,4 @@ window.__ModuleLoader__.load({
   },
 });
 
-// build 2026-11-06T15:37 prompt-rename
+// build 2026-11-06T22:05 native-sidebar-toggle
