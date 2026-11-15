@@ -1,7 +1,7 @@
 {
   "name": "@local/dsh-projects-browser",
-  "version": "0.1.0",
-  "description": "Codex-style sidebar browser for DeepSeek Harness: collapsible pinned/projects/recent sections, status marks (working, approval, interrupted, completed), right-click sort and workspace rename/delete, and per-session pin/archive menus.",
+  "version": "0.1.2",
+  "description": "Codex-style sidebar browser for DeepSeek Harness: a magnifier next to the bell opens a session search (titles, projects, and host content hits when the full-text index is on), plus collapsible pinned/projects/recent sections, status marks, right-click sort and workspace rename/delete, and per-session pin/archive menus.",
   "license": "MIT",
   "homepage": "https://github.com/Xchcy/dsh-codex-kit",
   "repository": {

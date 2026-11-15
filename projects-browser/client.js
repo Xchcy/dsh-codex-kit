@@ -71,6 +71,19 @@ window.__ModuleLoader__.load({
       'ctx.showNative': '显示原生侧栏项（插件/定时任务等）',
       'ctx.hideNative': '隐藏原生侧栏项（插件/定时任务等）',
       'error.renameWorkspace': '重命名项目失败',
+      'search.button': '搜索会话',
+      'search.placeholder': '搜索会话标题或对话内容',
+      'search.clear': '清空搜索',
+      'search.close': '收起搜索',
+      'search.results': '搜索结果',
+      'search.count': '{n} 条结果',
+      'search.pending': '正在搜索…',
+      'search.empty': '没有匹配的会话',
+      'search.error': '搜索失败，请稍后重试',
+      'search.titleOnly': '仅匹配标题与项目名（内容检索未启用）',
+      'search.hasMore': '只显示前 {n} 条结果，输入更精确的关键词可缩小范围',
+      'search.archived': '已归档',
+      'search.archivedBlocked': '「{title}」已归档，先在「已归档」分区恢复后再打开。',
     };
     const en = {
       'section.projects': 'Projects',
@@ -136,6 +149,19 @@ window.__ModuleLoader__.load({
       'ctx.showNative': 'Show native sidebar entries (plugins, scheduled tasks, ...)',
       'ctx.hideNative': 'Hide native sidebar entries (plugins, scheduled tasks, ...)',
       'error.renameWorkspace': 'Could not rename the project',
+      'search.button': 'Search sessions',
+      'search.placeholder': 'Search titles or message content',
+      'search.clear': 'Clear search',
+      'search.close': 'Close search',
+      'search.results': 'Search results',
+      'search.count': '{n} results',
+      'search.pending': 'Searching…',
+      'search.empty': 'No matching sessions',
+      'search.error': 'Search failed. Try again in a moment.',
+      'search.titleOnly': 'Matching titles and projects only (content search is off)',
+      'search.hasMore': 'Showing the first {n} results. Add more words to narrow the search.',
+      'search.archived': 'Archived',
+      'search.archivedBlocked': '"{title}" is archived. Restore it from the Archived section before opening it.',
     };
 
     const CSS = [
@@ -197,6 +223,36 @@ window.__ModuleLoader__.load({
       '.dsh-pb-ctx-sep{height:1px;margin:4px 6px;background:var(--dsw-alias-border-l2)}',
       '.dsh-pb-rename{flex:1;min-width:0;height:24px;padding:0 6px;border:1px solid var(--dsw-alias-border-l2);border-radius:6px;background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;outline:none}',
       '.dsh-pb-rename:focus{border-color:var(--dsw-alias-state-business-primary)}',
+      // Session search lives behind a magnifier button that sits next to the
+      // notification bell; the field itself is an ordinary row at the top of
+      // the list (no sticky), so it never fights the section headers.
+      '.dsh-pb-search{display:flex;align-items:center;gap:6px;box-sizing:border-box;height:30px;margin:0 -2px 2px;padding:0 6px;border:1px solid transparent;border-radius:6px;background:var(--dsw-alias-bg-layer-1)}',
+      '.dsh-pb-search:focus-within{border-color:var(--dsw-alias-border-l3);background:var(--dsw-alias-bg-layer-1)}',
+      '.dsh-pb-search-icon{display:inline-flex;flex:none;justify-content:center;align-items:center;width:16px;height:16px;color:var(--dsw-alias-label-tertiary)}',
+      '.dsh-pb-search:focus-within .dsh-pb-search-icon{color:var(--dsw-alias-state-business-primary)}',
+      '.dsh-pb-search-input{flex:1;min-width:0;height:24px;padding:0;border:none;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;line-height:18px;outline:none}',
+      '.dsh-pb-search-input::placeholder{color:var(--dsw-alias-label-tertiary)}',
+      '.dsh-pb-search-clear{display:inline-flex;flex:none;justify-content:center;align-items:center;width:18px;height:18px;padding:0;border:none;border-radius:4px;background:transparent;color:var(--dsw-alias-label-tertiary);cursor:pointer}',
+      '.dsh-pb-search-clear:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}',
+      '.dsh-pb-search-launcher{position:fixed;z-index:1000;pointer-events:auto;box-sizing:border-box;width:28px;height:28px;padding:0;border:0;border-radius:8px;background:transparent;color:var(--dsw-alias-label-secondary);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s ease,color .15s ease}',
+      '.dsh-pb-search-launcher:hover{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}',
+      '.dsh-pb-search-launcher[data-open="true"]{background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-primary)}',
+      '.dsh-pb-search-launcher svg{width:17px;height:17px;display:block}',
+      '.dsh-pb-search-count{flex:none;padding-right:2px;color:var(--dsw-alias-label-tertiary);font-size:11px}',
+      '.dsh-pb-result{display:flex;flex-direction:column;gap:1px;box-sizing:border-box;width:100%;min-height:44px;padding:4px 6px;border:none;border-radius:6px;background:transparent;color:var(--dsw-alias-label-primary);font:inherit;text-align:left;cursor:pointer}',
+      '.dsh-pb-result:hover{background:var(--dsw-alias-interactive-bg-hover)}',
+      '.dsh-pb-result:focus-visible{outline:2px solid var(--dsw-alias-state-business-primary);outline-offset:-2px}',
+      '.dsh-pb-result[data-archived="true"]{cursor:default}',
+      '.dsh-pb-result-head{display:flex;align-items:center;gap:8px;min-width:0;min-height:20px}',
+      '.dsh-pb-result-title{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:13px;line-height:18px}',
+      '.dsh-pb-result-sub{display:flex;align-items:center;gap:6px;min-width:0;padding-left:24px}',
+      '.dsh-pb-result-workspace{flex:none;max-width:44%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--dsw-alias-label-tertiary);font-size:11px;line-height:16px}',
+      '.dsh-pb-result-snippet{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--dsw-alias-label-secondary);font-size:11px;line-height:16px}',
+      '.dsh-pb-hit{padding:0;border-radius:2px;background:var(--dsw-alias-state-warn-fill, rgba(255, 193, 7, .3));color:inherit;font-weight:600}',
+      '.dsh-pb-tag{flex:none;padding:0 4px;border-radius:4px;background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-tertiary);font-size:10px;line-height:15px}',
+      '.dsh-pb-search-more{padding:2px 8px 2px 24px;color:var(--dsw-alias-label-tertiary);font-size:11px;line-height:16px}',
+      '.dsh-pb-search-empty{padding:2px 8px 6px 24px;color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:18px}',
+      '.dsh-pb-search-hint{padding:0 8px 4px 24px;color:var(--dsw-alias-label-tertiary);font-size:11px;line-height:16px;font-style:italic}',
     ].join('\n');
 
     const FOLDER_ICON = h(
@@ -287,6 +343,19 @@ window.__ModuleLoader__.load({
       'svg',
       { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'none', 'aria-hidden': 'true' },
       h('path', { d: 'M5 12.5 9.5 17 19 7', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }),
+    );
+
+    const SEARCH_ICON = h(
+      'svg',
+      { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'none', 'aria-hidden': 'true' },
+      h('circle', { cx: 10.5, cy: 10.5, r: 6.5, stroke: 'currentColor', strokeWidth: 1.6 }),
+      h('path', { d: 'M15.5 15.5 21 21', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round' }),
+    );
+
+    const CLEAR_ICON = h(
+      'svg',
+      { width: 12, height: 12, viewBox: '0 0 24 24', fill: 'none', 'aria-hidden': 'true' },
+      h('path', { d: 'M6 6l12 12M18 6 6 18', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' }),
     );
 
     function Chevron({ open }) {
@@ -460,6 +529,197 @@ window.__ModuleLoader__.load({
       return localeIsZh()
         ? date.getMonth() + 1 + '月' + date.getDate() + '日'
         : date.getMonth() + 1 + '/' + date.getDate();
+    }
+
+    /** The host rejects oversized or NUL-bearing phrases, so clamp before asking. */
+    const SEARCH_QUERY_MAX_CODE_UNITS = 500;
+    const SEARCH_DEBOUNCE_MS = 250;
+    const SEARCH_TIMEOUT_MS = 4000;
+    const SEARCH_RESULT_LIMIT_FALLBACK = 50;
+
+    /**
+     * Set once the host answers that its session-query index is closed. Later
+     * keystrokes then skip the round trip and filter locally right away
+     * instead of paying the timeout on every query.
+     */
+    let contentSearchDisabled = false;
+
+    /**
+     * Search visibility is shared by two slot entries: the magnifier button
+     * lives in `shell.overlay` next to the notification bell, while the field
+     * itself is rendered inside the sidebar list. A tiny external store keeps
+     * both in sync (and stays referentially stable for useSyncExternalStore).
+     */
+    function createSearchToggle() {
+      let open = false;
+      let focusPending = false;
+      const listeners = new Set();
+      const emit = () => {
+        for (const listener of listeners) listener();
+      };
+      return {
+        subscribe(listener) {
+          listeners.add(listener);
+          return () => {
+            listeners.delete(listener);
+          };
+        },
+        isOpen() {
+          return open;
+        },
+        setOpen(next) {
+          if (open === next) return;
+          open = next;
+          focusPending = next;
+          emit();
+        },
+        toggle() {
+          if (open === false) {
+            open = true;
+            focusPending = true;
+            emit();
+            return;
+          }
+          open = false;
+          focusPending = false;
+          emit();
+        },
+        /** Consume the pending "focus the field" request; true only once. */
+        takeFocus() {
+          if (focusPending !== true) return false;
+          focusPending = false;
+          return true;
+        },
+      };
+    }
+
+    const searchToggle = createSearchToggle();
+
+    function sanitizeSearchQuery(value) {
+      const text = String(value === undefined || value === null ? '' : value).replace(/\0/g, '');
+      if (text.length <= SEARCH_QUERY_MAX_CODE_UNITS) return text;
+      let end = SEARCH_QUERY_MAX_CODE_UNITS;
+      const last = text.charCodeAt(end - 1);
+      const next = text.charCodeAt(end);
+      if (last >= 0xd800 && last <= 0xdbff && next >= 0xdc00 && next <= 0xdfff) end -= 1;
+      return text.slice(0, end);
+    }
+
+    function collapseWhitespace(value) {
+      return String(value === undefined || value === null ? '' : value)
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    /** Split a label into plain runs and query-matched runs, so hits can be marked. */
+    function highlightParts(text, query) {
+      const source = String(text === undefined || text === null ? '' : text);
+      const needle = String(query === undefined || query === null ? '' : query).toLowerCase();
+      if (needle === '') return [source];
+      const haystack = source.toLowerCase();
+      const parts = [];
+      let from = 0;
+      while (from < haystack.length) {
+        const at = haystack.indexOf(needle, from);
+        if (at < 0) break;
+        if (at > from) parts.push(source.slice(from, at));
+        parts.push({ highlight: source.slice(at, at + needle.length) });
+        from = at + needle.length;
+      }
+      if (parts.length === 0) return [source];
+      if (from < source.length) parts.push(source.slice(from));
+      return parts;
+    }
+
+    function workspaceNameOf(workspace, t) {
+      if (typeof workspace.title === 'string' && workspace.title !== '') return workspace.title;
+      return isDefaultWorkspace(workspace.path) ? t('projects.defaultName') : basenameOf(workspace.path);
+    }
+
+    /**
+     * DSH ships the session-query index closed (`session-query-sqlite` mounted
+     * with `openAt: never`), so full-text calls answer with
+     * SESSION_QUERY_SEARCH_DISABLED and the sidebar is meant to match titles
+     * and workspace names only. That is a deployment choice, not a failure.
+     */
+    function isSearchDisabled(error) {
+      if (error === null || error === undefined) return false;
+      const code = typeof error.code === 'string' ? error.code : '';
+      let message = '';
+      try {
+        message = typeof error.message === 'string' ? error.message : String(error);
+      } catch {
+        message = '';
+      }
+      return code === 'SESSION_QUERY_SEARCH_DISABLED' || message.includes('session search is disabled');
+    }
+
+    /**
+     * Host-side full-text search over message content, debounced and aborted
+     * with the query. The injected callback is kept in a ref: the slot builds
+     * its props per render, and a changing function identity must not restart
+     * an in-flight search.
+     */
+    function useSessionSearch(searchSessions, query) {
+      const latest = useRef(searchSessions);
+      latest.current = searchSessions;
+      const [state, setState] = useState({ query: '', status: 'idle', items: [], hasMore: false });
+      useEffect(() => {
+        if (query === '') {
+          setState((current) => (current.status === 'idle' ? current : { query: '', status: 'idle', items: [], hasMore: false }));
+          return undefined;
+        }
+        const run = latest.current;
+        if (typeof run !== 'function') {
+          setState({ query, status: 'empty', items: [], hasMore: false });
+          return undefined;
+        }
+        if (contentSearchDisabled) {
+          setState({ query, status: 'title-only', items: [], hasMore: false });
+          return undefined;
+        }
+        const controller = new AbortController();
+        setState({ query, status: 'loading', items: [], hasMore: false });
+        let settled = false;
+        const settle = (next) => {
+          if (settled || controller.signal.aborted) return;
+          settled = true;
+          window.clearTimeout(timeout);
+          setState(next);
+        };
+        const timer = window.setTimeout(() => {
+          Promise.resolve()
+            .then(() => run(query, controller.signal))
+            .then((result) => {
+              const items = result !== null && typeof result === 'object' && Array.isArray(result.items) ? result.items : [];
+              settle({ query, status: 'ready', items, hasMore: result !== null && typeof result === 'object' && result.hasMore === true });
+            })
+            .catch((error) => {
+              if (controller.signal.aborted) return;
+              if (isSearchDisabled(error)) {
+                contentSearchDisabled = true;
+                settle({ query, status: 'title-only', items: [], hasMore: false });
+                return;
+              }
+              console.warn('[projects-browser] session search failed:', error);
+              settle({ query, status: 'error', items: [], hasMore: false });
+            });
+        }, SEARCH_DEBOUNCE_MS);
+        // A host that never answers must not leave the panel stuck on
+        // "searching": fall back to title matching after the timeout.
+        const timeout = window.setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          console.info('[projects-browser] session search timed out; matching titles only');
+          setState({ query, status: 'title-only', items: [], hasMore: false });
+        }, SEARCH_DEBOUNCE_MS + SEARCH_TIMEOUT_MS);
+        return () => {
+          window.clearTimeout(timer);
+          window.clearTimeout(timeout);
+          controller.abort();
+        };
+      }, [query]);
+      return state;
     }
 
     function readFlag(key, fallback) {
@@ -715,6 +975,122 @@ window.__ModuleLoader__.load({
       );
     }
 
+    const SIDEBAR_SELECTORS = [
+      '[class*="wtg9ga_root"]',
+      '[class*="_sideCol"]',
+      '[class*="sidebarCol"]',
+      '[class*="sidebar_col"]',
+    ];
+
+    /** The host's sidebar element; the magnifier anchors to its box. */
+    function locateSidebar() {
+      const frame = document.querySelector('[data-sidebar-collapsed]');
+      if (frame !== null) {
+        const child = frame.firstElementChild;
+        if (child !== null && child.getBoundingClientRect().width > 24) return child;
+      }
+      for (const selector of SIDEBAR_SELECTORS) {
+        const el = document.querySelector(selector);
+        if (el !== null && el.getBoundingClientRect().width > 24) return el;
+      }
+      return null;
+    }
+
+    /** The notification bell rendered by the bell plugin, if it is installed. */
+    function locateBell() {
+      const el = document.querySelector('.dsh-nb-bell');
+      if (el === null) return null;
+      const rect = el.getBoundingClientRect();
+      if (rect.width < 8 || rect.height < 8) return null;
+      return rect;
+    }
+
+    /**
+     * Where the magnifier belongs: immediately left of the notification bell
+     * when that plugin is present, otherwise in the same corner of the sidebar
+     * box the bell itself would use. Re-measured on resize and layout shifts.
+     */
+    function useLauncherPlacement() {
+      const [placement, setPlacement] = React.useState(null);
+      React.useEffect(() => {
+        let stopped = false;
+        const measure = () => {
+          if (stopped) return;
+          const bell = locateBell();
+          let next;
+          if (bell !== null) {
+            next = { left: Math.max(8, bell.left - 30), top: bell.top };
+          } else {
+            const el = locateSidebar();
+            if (el === null) {
+              setPlacement(null);
+              return;
+            }
+            const rect = el.getBoundingClientRect();
+            // The collapsed rail is ~48px wide and already carries its own
+            // search action, so the floating magnifier only shows next to an
+            // expanded sidebar.
+            next = rect.width < 180 ? null : { left: Math.max(8, rect.right - 68), top: rect.top + 8 };
+          }
+          if (next === null) {
+            setPlacement(null);
+            return;
+          }
+          setPlacement((prev) => {
+            if (prev !== null && Math.abs(prev.left - next.left) < 0.5 && Math.abs(prev.top - next.top) < 0.5) return prev;
+            return next;
+          });
+        };
+        measure();
+        const timer = window.setInterval(measure, 400);
+        let observer = null;
+        if (typeof ResizeObserver !== 'undefined') {
+          observer = new ResizeObserver(measure);
+          const anchor = document.querySelector('.dsh-nb-bell') || locateSidebar();
+          if (anchor !== null) observer.observe(anchor);
+        }
+        window.addEventListener('resize', measure);
+        return () => {
+          stopped = true;
+          window.clearInterval(timer);
+          window.removeEventListener('resize', measure);
+          if (observer !== null) observer.disconnect();
+        };
+      }, []);
+      return placement;
+    }
+
+    /**
+     * The magnifier lives in `shell.overlay` next to the notification bell and
+     * only toggles the search field that sits at the top of the sidebar list.
+     */
+    function SearchLauncher(props) {
+      const t = props.t;
+      const placement = useLauncherPlacement();
+      const open = React.useSyncExternalStore(searchToggle.subscribe, searchToggle.isOpen);
+      // The overlay slot does not always hand down a translator.
+      const label = typeof t === 'function' ? t('search.button') : 'Search sessions';
+      const style = {
+        left: placement === null ? 8 : placement.left,
+        top: placement === null ? 8 : placement.top,
+        display: placement === null ? 'none' : 'flex',
+      };
+      return h(
+        'button',
+        {
+          type: 'button',
+          className: 'dsh-pb-search-launcher',
+          'data-open': open === true ? 'true' : 'false',
+          style,
+          title: label,
+          'aria-label': label,
+          'aria-expanded': open === true ? 'true' : 'false',
+          onClick: () => searchToggle.toggle(),
+        },
+        SEARCH_ICON,
+      );
+    }
+
     function ProjectsBrowser(props) {
       const {
         wide,
@@ -733,6 +1109,8 @@ window.__ModuleLoader__.load({
         unarchiveSession,
         pinSession,
         unpinSession,
+        searchSessions,
+        searchResultLimit,
       } = props;
       const sessions = useSessions((snapshot) => snapshot);
       const workspaces = useWorkspaces((snapshot) => snapshot);
@@ -756,6 +1134,14 @@ window.__ModuleLoader__.load({
       const [actionError, setActionError] = useState('');
       const [interruptedIds, setInterruptedIds] = useState(() => new Set(Object.keys(readInterruptedTurns())));
       const runningSeen = useRef(new Set());
+      const [query, setQuery] = useState('');
+      const searchOpen = React.useSyncExternalStore(searchToggle.subscribe, searchToggle.isOpen);
+      const searchInputRef = useRef(null);
+      const normalizedQuery = collapseWhitespace(sanitizeSearchQuery(query));
+      const searching = normalizedQuery !== '';
+      const searchLimit =
+        typeof searchResultLimit === 'number' && searchResultLimit > 0 ? searchResultLimit : SEARCH_RESULT_LIMIT_FALLBACK;
+      const remoteSearch = useSessionSearch(searchSessions, normalizedQuery);
 
       const toggleProject = useCallback((workspaceId) => {
         setExpanded((current) => {
@@ -823,6 +1209,72 @@ window.__ModuleLoader__.load({
         },
         [statuses, t, errorSet, pinnedIds, interruptedIds],
       );
+
+      // Session id -> the project label the row was filed under, so a search
+      // result can say where it lives without a reverse lookup per row.
+      const workspaceNames = useMemo(() => {
+        const map = new Map();
+        for (const workspace of workspaceItems) {
+          if (workspace === null || typeof workspace !== 'object' || !Array.isArray(workspace.sessionIds)) continue;
+          const name = workspaceNameOf(workspace, t);
+          for (const id of workspace.sessionIds) if (!map.has(id)) map.set(id, name);
+        }
+        return map;
+      }, [workspaceItems, t]);
+
+      /**
+       * Two sources, one list: title/workspace matches are derived locally from
+       * the session snapshot (so a rename is visible immediately), and message
+       * hits come from the Host content index. Title matches lead, then content
+       * hits, each newest first inside its group.
+       */
+      const searchRows = useMemo(() => {
+        if (normalizedQuery === '') return { items: [], hasMore: false };
+        const byId =
+          sessions !== undefined && sessions !== null && sessions.byId !== null && typeof sessions.byId === 'object' ? sessions.byId : {};
+        const needle = normalizedQuery.toLowerCase();
+        const contentById = new Map();
+        if (remoteSearch.status === 'ready') {
+          for (const item of remoteSearch.items) {
+            if (item === null || typeof item !== 'object' || typeof item.sessionId !== 'string') continue;
+            if (!contentById.has(item.sessionId)) contentById.set(item.sessionId, item);
+          }
+        }
+        const titleHits = [];
+        for (const row of Object.values(byId)) {
+          if (row === null || typeof row !== 'object' || typeof row.id !== 'string') continue;
+          if (row.parentSessionId !== undefined && row.parentSessionId !== null) continue;
+          if (row.blank === true) continue;
+          const title = (
+            typeof row.displayTitle === 'string' && row.displayTitle !== ''
+              ? row.displayTitle
+              : typeof row.title === 'string'
+                ? row.title
+                : ''
+          ).toLowerCase();
+          const label = (workspaceNames.get(row.id) || '').toLowerCase();
+          if (title.includes(needle) || label.includes(needle)) titleHits.push(row);
+        }
+        titleHits.sort(
+          (a, b) => (typeof b.updatedAt === 'number' ? b.updatedAt : 0) - (typeof a.updatedAt === 'number' ? a.updatedAt : 0),
+        );
+        const ordered = [];
+        const seen = new Set();
+        const push = (row) => {
+          if (row === undefined || row === null || typeof row.id !== 'string' || seen.has(row.id)) return;
+          seen.add(row.id);
+          ordered.push(row);
+        };
+        for (const row of titleHits) push(row);
+        for (const sessionId of contentById.keys()) push(byId[sessionId]);
+        const items = ordered.slice(0, searchLimit).map((row) => {
+          const base = rowOf(row, archivedIds.has(row.id));
+          const match = contentById.get(row.id);
+          const snippet = match === undefined ? '' : collapseWhitespace(typeof match.snippet === 'string' ? match.snippet : '');
+          return { ...base, workspace: workspaceNames.get(row.id) || basenameOf(row.cwd), snippet };
+        });
+        return { items, hasMore: remoteSearch.hasMore === true || ordered.length > searchLimit };
+      }, [normalizedQuery, sessions, remoteSearch, workspaceNames, archivedIds, rowOf, searchLimit]);
 
       const orderIndex = useMemo(() => {
         const map = new Map();
@@ -1080,10 +1532,82 @@ window.__ModuleLoader__.load({
         });
       }, []);
 
+      const renameWorkspaceWithPrompt = useCallback(
+        async (workspace, name) => {
+          if (typeof window === 'undefined' || typeof window.prompt !== 'function') return;
+          const answer = window.prompt(t('ctx.rename'), name);
+          if (answer === null) return;
+          const next = answer.trim();
+          if (next === '' || next === name) return;
+          try {
+            setActionError('');
+            await renameWorkspace(workspace.workspaceId, next);
+          } catch (reason) {
+            console.warn('[projects-browser] renaming the workspace failed:', reason);
+            setActionError(t('error.renameWorkspace'));
+          }
+        },
+        [renameWorkspace, t],
+      );
+
+      // Ctrl/Cmd+K is the native session-search shortcut; it belonged to the
+      // component this plugin replaced, so claim it here: open the field (a
+      // collapsed rail expands first) and let the focus effect take over.
+      useEffect(() => {
+        const onKeyDown = (event) => {
+          if (event.defaultPrevented === true) return;
+          if (event.altKey === true || event.shiftKey === true) return;
+          if (event.ctrlKey !== true && event.metaKey !== true) return;
+          if (typeof event.key !== 'string' || event.key.toLowerCase() !== 'k') return;
+          event.preventDefault();
+          event.stopPropagation();
+          if (!wide) expandSidebar();
+          searchToggle.setOpen(true);
+          // Already-open field: the store does not change, so focus it here.
+          const node = searchInputRef.current;
+          if (node !== null && typeof node.focus === 'function') {
+            node.focus();
+            if (typeof node.select === 'function') node.select();
+          }
+        };
+        window.addEventListener('keydown', onKeyDown, true);
+        return () => window.removeEventListener('keydown', onKeyDown, true);
+      }, [wide, expandSidebar]);
+
+      useEffect(() => {
+        if (!wide || !searchOpen) return;
+        if (!searchToggle.takeFocus()) return;
+        const node = searchInputRef.current;
+        if (node !== null && typeof node.focus === 'function') {
+          node.focus();
+          if (typeof node.select === 'function') node.select();
+        }
+      }, [wide, searchOpen]);
+
+      // Closing the field drops the phrase, so reopening starts clean.
+      useEffect(() => {
+        if (searchOpen) return;
+        setQuery('');
+      }, [searchOpen]);
+
       if (!wide) {
         return h(
           'div',
           { className: 'dsh-pb-rail' },
+          h(
+            'button',
+            {
+              type: 'button',
+              className: 'dsh-pb-action',
+              title: t('search.button'),
+              'aria-label': t('search.button'),
+              onClick: () => {
+                expandSidebar();
+                searchToggle.setOpen(true);
+              },
+            },
+            SEARCH_ICON,
+          ),
           h(
             'button',
             {
@@ -1111,24 +1635,6 @@ window.__ModuleLoader__.load({
         }
         return null;
       };
-
-      const renameWorkspaceWithPrompt = useCallback(
-        async (workspace, name) => {
-          if (typeof window === 'undefined' || typeof window.prompt !== 'function') return;
-          const answer = window.prompt(t('ctx.rename'), name);
-          if (answer === null) return;
-          const next = answer.trim();
-          if (next === '' || next === name) return;
-          try {
-            setActionError('');
-            await renameWorkspace(workspace.workspaceId, next);
-          } catch (reason) {
-            console.warn('[projects-browser] renaming the workspace failed:', reason);
-            setActionError(t('error.renameWorkspace'));
-          }
-        },
-        [renameWorkspace, t],
-      );
 
       const sortItems = () => [
         { label: t('ctx.sort.activity'), checked: sortMode === 'activity', run: () => setSortMode('activity') },
@@ -1299,9 +1805,133 @@ window.__ModuleLoader__.load({
           ),
         );
 
-      return h(
+      const highlight = (text) =>
+        highlightParts(text, normalizedQuery).map((part, index) =>
+          typeof part === 'string' ? part : h('mark', { key: 'hit-' + String(index), className: 'dsh-pb-hit' }, part.highlight),
+        );
+
+      const openSearchResult = (row) => {
+        if (row.archived === true) {
+          setActionError(t('search.archivedBlocked').replace('{title}', row.title));
+          return;
+        }
+        setActionError('');
+        if (errorStore !== undefined && errorStore !== null && typeof errorStore.clear === 'function') errorStore.clear(row.id);
+        clearInterrupted(row.id);
+        setQuery('');
+        openSession(row.id);
+      };
+
+      const searchRow = (row) =>
+        h(
+          'button',
+          {
+            key: row.id,
+            type: 'button',
+            className: 'dsh-pb-result',
+            'data-session-id': row.id,
+            'data-archived': row.archived === true ? 'true' : 'false',
+            title: row.title,
+            onClick: () => openSearchResult(row),
+          },
+          h(
+            'span',
+            { className: 'dsh-pb-result-head' },
+            h('span', { className: 'dsh-pb-icon' }, CHAT_ICON),
+            h('span', { className: 'dsh-pb-result-title' }, highlight(row.title)),
+            row.archived === true ? h('span', { className: 'dsh-pb-tag' }, t('search.archived')) : null,
+            markOf(row),
+            h('span', { className: 'dsh-pb-meta' }, metaOf(row.updatedAt)),
+          ),
+          h(
+            'span',
+            { className: 'dsh-pb-result-sub' },
+            row.workspace === '' ? null : h('span', { className: 'dsh-pb-result-workspace' }, row.workspace),
+            row.snippet === '' ? null : h('span', { className: 'dsh-pb-result-snippet' }, highlight(row.snippet)),
+          ),
+        );
+
+      const onSearchKeyDown = (event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          // First Escape clears the phrase, a second one puts the field away.
+          if (searching) {
+            setQuery('');
+            return;
+          }
+          searchToggle.setOpen(false);
+          return;
+        }
+        if (event.key !== 'Enter') return;
+        const first = searchRows.items.find((row) => row.archived !== true);
+        if (first === undefined) return;
+        event.preventDefault();
+        openSearchResult(first);
+      };
+
+      const searchField = h(
         'div',
-        { className: 'dsh-pb-root' },
+        { className: 'dsh-pb-search' },
+        h('span', { className: 'dsh-pb-search-icon' }, SEARCH_ICON),
+        h('input', {
+          ref: searchInputRef,
+          className: 'dsh-pb-search-input',
+          type: 'text',
+          value: query,
+          placeholder: t('search.placeholder'),
+          'aria-label': t('search.button'),
+          spellCheck: false,
+          autoComplete: 'off',
+          onChange: (event) => setQuery(event.target.value),
+          onKeyDown: onSearchKeyDown,
+        }),
+        h(
+          'button',
+          {
+            type: 'button',
+            className: 'dsh-pb-search-clear',
+            title: searching ? t('search.clear') : t('search.close'),
+            'aria-label': searching ? t('search.clear') : t('search.close'),
+            onClick: () => {
+              if (searching) {
+                setQuery('');
+                const node = searchInputRef.current;
+                if (node !== null && typeof node.focus === 'function') node.focus();
+                return;
+              }
+              setQuery('');
+              searchToggle.setOpen(false);
+            },
+          },
+          CLEAR_ICON,
+        ),
+      );
+
+      const searchSection = h(
+        'div',
+        { className: 'dsh-pb-section' },
+        h(
+          'div',
+          { className: 'dsh-pb-head' },
+          h('span', { className: 'dsh-pb-head-label' }, t('search.results')),
+          h(
+            'span',
+            { className: 'dsh-pb-search-count' },
+            remoteSearch.status === 'loading' ? t('search.pending') : t('search.count').replace('{n}', String(searchRows.items.length)),
+          ),
+        ),
+        actionError === '' ? null : h('div', { className: 'dsh-pb-error' }, actionError),
+        remoteSearch.status === 'error' ? h('div', { className: 'dsh-pb-error' }, t('search.error')) : null,
+        remoteSearch.status === 'title-only' ? h('div', { className: 'dsh-pb-search-hint' }, t('search.titleOnly')) : null,
+        searchRows.items.length === 0
+          ? remoteSearch.status === 'loading'
+            ? null
+            : h('div', { className: 'dsh-pb-search-empty' }, t('search.empty'))
+          : h('div', { className: 'dsh-pb-section' }, searchRows.items.map(searchRow)),
+        searchRows.hasMore ? h('div', { className: 'dsh-pb-search-more' }, t('search.hasMore').replace('{n}', String(searchLimit))) : null,
+      );
+
+      const browseSections = [
         pinnedRows.length === 0 || pinnedHidden === true
           ? null
           : h(
@@ -1358,8 +1988,9 @@ window.__ModuleLoader__.load({
                 : h('div', { className: 'dsh-pb-section' }, archivedRows.map(archivedSessionRow)),
             )
           : null,
-        ctx.element,
-      );
+      ];
+
+      return h('div', { className: 'dsh-pb-root' }, searchOpen ? searchField : null, searching ? searchSection : browseSections, ctx.element);
     }
 
     /** Re-renders on a client store change; the store keeps its own snapshot. */
@@ -1520,9 +2151,49 @@ window.__ModuleLoader__.load({
                   if (path === undefined || path === null || path === '') return;
                   await workspaces.create({ path });
                 },
+                // The Host owns a content index over visible messages; this
+                // plugin only renders its result. A failed call throws so the
+                // view can distinguish "no hits" from "search unavailable".
+                searchSessions: async (query, signal) => {
+                  if (sessionsService === undefined || sessionsService === null || typeof sessionsService.search !== 'function') {
+                    return { items: [], hasMore: false };
+                  }
+                  const result = await sessionsService.search(query, signal);
+                  if (result === null || typeof result !== 'object' || result.ok !== true) {
+                    const message =
+                      result !== null && typeof result === 'object' && result.error !== null && typeof result.error === 'object'
+                        ? String(result.error.message)
+                        : 'session search failed';
+                    throw new Error(message);
+                  }
+                  return result.value;
+                },
+                searchResultLimit:
+                  sessionsService !== undefined &&
+                  sessionsService !== null &&
+                  typeof sessionsService.searchResultLimit === 'number' &&
+                  sessionsService.searchResultLimit > 0
+                    ? sessionsService.searchResultLimit
+                    : SEARCH_RESULT_LIMIT_FALLBACK,
               }),
             },
             ProjectsBrowser,
+          ),
+        );
+
+        // The magnifier that opens the search field sits next to the
+        // notification bell, both anchored to the sidebar box, so it belongs
+        // to the overlay slot rather than to the sidebar list itself.
+        ctx.slots.inject('shell.overlay', () =>
+          ctx.slots.register(
+            {
+              name: 'shell.overlay',
+              id: 'projects-browser-search',
+              order: 101,
+              locale: NS,
+              inject: () => ({}),
+            },
+            SearchLauncher,
           ),
         );
       },
@@ -1531,3 +2202,4 @@ window.__ModuleLoader__.load({
 });
 
 // build 2026-11-06T22:05 native-sidebar-toggle
+// rev: search-magnifier-1

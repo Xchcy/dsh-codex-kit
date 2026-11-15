@@ -7,7 +7,7 @@
 | 插件 | 目录 | 作用 |
 | --- | --- | --- |
 | 仅聊天模式 | `chat-only/` | 侧边栏底部新增「✏️ 仅聊天」按钮，一键在 `~/.dsh/chats`（「聊天」工作区）打开空白会话，不依附任何项目。 |
-| 项目 / 最近 浏览器 | `projects-browser/` | 替换原生侧边栏工作区区：固定在顶部的「置顶」「项目」「最近」三个分区；分区标题与工作区行支持右键菜单（添加 / 重命名 / 删除工作区、会话排序、折叠、显示或隐藏置顶分区）；每行右侧 `⋯` 菜单支持置顶 / 取消置顶 / 归档。 |
+| 项目 / 最近 浏览器 | `projects-browser/` | 替换原生侧边栏工作区区：铃铛左侧的放大镜按钮（点击展开搜索框，`Ctrl/⌘+K`，标题 + 项目 + 可选正文命中）、「置顶」「项目」「最近」三个分区；分区标题与工作区行支持右键菜单（添加 / 重命名 / 删除工作区、会话排序、折叠、显示或隐藏置顶分区）；每行右侧 `⋯` 菜单支持置顶 / 取消置顶 / 归档。 |
 | 通知铃铛 | `notifications-bell/` | 侧边栏右上角铃铛：等待审批 = 黄点，意外停止 = 红点，已完成 = 蓝点；点开按「正在工作 → 等待审批 → 意外停止 → 已完成」优先显示，下方是最近的会话。 |
 
 ## 预览
@@ -113,6 +113,7 @@ plugin_manager action=remove_bundle target="@local/dsh-xxx"
 
 用自定义实现替换原生 `sidebar.workspaces`（`priority: -10` shadow），从上到下依次是：
 
+0. **搜索**：搜索框默认隐藏，点小铃铛左侧的放大镜（或 `Ctrl/⌘+K`，侧边栏收起时先展开）才在列表顶部展开，再点一次放大镜 / 按 `Esc`（第一下清空、第二下收起）关闭；搜索框随列表滚动，不吸顶。`Enter` 打开第一条结果。输入后实时过滤：先按会话标题与项目名本地匹配（改标题立刻生效），再叠加宿主内容索引的正文命中（命中处高亮，行下方显示所属项目与摘要）。DSH 默认把 `session-query-sqlite` 挂在 `openAt: never`（全文索引是 opt-in），此时宿主返回 `SESSION_QUERY_SEARCH_DISABLED` 或迟迟不应答，搜索框会自动降级为「仅匹配标题与项目名」，并在标题下给出说明，不会报错卡住。
 1. **置顶**：已置顶的会话单独成区，排在「项目」「最近」之上，按当前排序规则排列；没有置顶会话（或在右键菜单里隐藏了该分区）时整区不显示。
 2. **项目**：按工作区列出，可展开显示工作区内会话；标题右侧 `+` 可添加工作区。折叠状态记在 `localStorage["dsh.projectsBrowser.projects"]`。
 3. **最近**：聊天会话 + 各工作区会话合并成的扁平列表，按优先级排序（见下表）。新建但从未发过消息的空会话不会出现在任何列表里。
@@ -133,6 +134,20 @@ plugin_manager action=remove_bundle target="@local/dsh-xxx"
 排序方式与置顶分区显隐分别保存在 `localStorage["dsh.projectsBrowser.sort"]` 和 `localStorage["dsh.projectsBrowser.pinnedHidden"]`，刷新后保持。
 
 每行右侧 `⋯` 菜单：`置顶会话` / `取消置顶` / `归档会话`；归档行（通过恢复入口打开）只有 `恢复会话`。归档正在运行的会话会先弹出确认，确认后先停止再归档。
+
+**开启正文检索（可选）**
+
+DSH 默认把全文索引关掉（`@deepseek-ai/dsh-base` 里 `session-query-sqlite` 配的是 `openAt: never`，原生 Web 侧边栏因此也只匹配标题与工作区名）。想让搜索命中对话正文，在本机 profile 的 `cordis.patch.yml`（如 `E:\dsh-home\profiles\desktop\cordis.patch.yml`）末尾追加一层覆盖，然后重启 DSH 生效：
+
+```yaml
+- id: session-query-sqlite
+  name: "@deepseek-ai/dsh-session-query-sqlite"
+  config:
+    path: "E:/dsh-home/cache/session-query.sqlite"
+    openAt: first-search   # 首次搜索时建索引；也可用 startup
+```
+
+索引就绪后，插件会自动改用宿主返回的正文命中（带高亮片段），无需再改插件代码；索引未启用或调用超时时按上文降级为标题匹配。
 
 **「最近」的排序规则**
 
